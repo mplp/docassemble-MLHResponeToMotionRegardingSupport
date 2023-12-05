@@ -1,0 +1,965 @@
+---
+include:
+  - docassemble.AssemblyLine:assembly_line.yml
+  - docassemble.mlhframework:mlh_interview_framework.yml
+---
+metadata:
+  title: >-
+    Response to Motion Regarding Child Support
+  short title: >-
+    Response to Child Support
+  description: |-
+    This interview helps someone in Michigan respond to a "Motion Regarding Child Support".
+  tags:
+    - "FA-03-00-00-00"
+    - "FA-05-00-00-00"
+  authors:
+    - Bryce Willey
+  original_form:
+    - https://www.courts.michigan.gov/siteassets/forms/scao-approved/foc51.pdf
+  help_page_url: >-
+    https://michiganlegalhelp.org/guide-to-legal-help
+  help_page_title: >-
+    Guide to Legal Help
+  allowed_courts: []
+  typical_role: "unknown"
+  al_weaver_version: "1.10.2"
+  generated_on: "2023-10-23"
+---
+code: |
+  # This controls the default country and list of states in address field questions
+  AL_DEFAULT_COUNTRY = "US"
+---
+code: |
+  # This controls the default state in address field questions
+  AL_DEFAULT_STATE = "MI"
+---
+code: |
+  github_repo_name =  'docassemble-MLHResponseToMotionRegardingSupport'
+---
+code: |
+  interview_short_title = "Respond to a \"Motion Regarding Child Support\""
+---
+code: |
+  MLH_time_min = 20
+  MLH_time_max = 60
+---
+code: |
+  al_form_type = "existing_case" 
+---
+# TODO(brycew): all of the images
+objects:
+  - image_court_papers: |
+      DAStaticFile.using(
+        filename="court_papers.jpg",
+        alt=word("""
+          A court form. The court information is circled in the top right; State of Michigan, Judicial District, Judicial Circuit, and County Probate.
+          The case number is circled in the top left: 01-234 DM. Below those is the party information, including the plaintiffs' and defendants' names, and address
+        """))
+  - image_uniform_order_date: |
+      DAStaticFile.using(
+        filename="date_of_order.jpg",
+        alt=word("The third page of the uniform child support order. The date is at the bottom, to the left of the judge's name"))
+  - image_plaintiff_or_defendant: |
+      DAStaticFile.using(
+        filename="plaintiff_or_defendant.jpg",
+        alt=word("The plaintiff and defendant's names are circled, partially down the first page. The Plaintiff is on the left, and the defendant is on the right."))
+  - image_support_amount: |
+      DAStaticFile.using(
+        filename="support_amount.jpg",
+        alt=word("The first page of the uniform child support order. The amounts are at the bottom, in item number 3."))
+  - image_subtotal_amount: |
+      DAStaticFile.using(
+        filename="subtotal_amount.png",
+        alt=word("In the support table in the uniform child support order. The subtotal is the 4th row, and the value is the furthest right column with a value."))
+---
+objects:
+  - other_parties: ALPeopleList.using(ask_number=True, target_number=1, complete_attribute="complete")
+  - users: ALPeopleList.using(ask_number=True, target_number=1, complete_attribute="complete")
+---
+# NOTE: for users and other_parties
+generic object: ALIndividual
+code: |
+  x.name.first
+  # TODO(#6): do we need to handle international addresses?
+  x.address.address
+  x.phone_number
+  x.complete = True
+---
+# NOTE: ensures there is only 1 party on both sides
+code: |
+  users.there_is_another = False
+---
+code: |
+  other_parties.there_are_any = True
+---
+code: |
+  other_parties.there_is_another = False
+# TODO(brycew): all of the sections
+sections:
+  - review_response_to_support: Review your answers
+---
+#################### Interview order #####################
+comment: |
+  Controls order and branching logic for questions specific to this form
+id: interview_order_response_to_support
+code: |
+  # Set the allowed courts for this interview
+  allowed_courts = []
+  nav.set_section("review_response_to_support")
+  # Below sets the user_role and user_ask_role by asking a question.
+  # You can set user_ask_role directly instead to either 'plaintiff' or 'defendant'
+  what_you_will_need
+
+  if not has_existing_motion:
+    existing_motion_kickout
+  docket_number
+
+  county_choice
+  court_index
+  the_court
+
+  if has_existing_support_order:
+    recent_judgment_date
+
+  if not is_parent or third_party_named:
+    parent_third_party_kickout
+  user_started_case
+  public_record_fyi
+
+  users.gather()
+  other_parties.gather()
+
+  costs_signpost
+  finding_support_signpost
+
+  # TODO(brycew): when are children gathered in this form?
+  set_all_existing_support
+  set_progress(14)
+  if conditions_changed_in_motion:
+    agree_conditions_changed
+    
+  agree_with_other_on_support
+  set_progress(28)
+  agree_with_motion
+  if agree_with_other_on_support == "does_not_agree":
+    changes_requested_signpost
+    children_number
+    base_support_new
+    child_care_new
+    ordinary_medical_new
+    is_additional_amount_new
+    asking_for_payer_benefits_credit
+  signature_date
+  interview_order_response_to_support = True
+---
+code: |
+  if has_existing_support_order:
+    who_paid
+    subtotal_amount
+    if paid_child_care:
+      child_care_time_period
+    if paid_medical_costs:
+      medical_care_time_period
+  set_all_existing_support = True
+---
+###################### Main order ######################
+comment: |
+  This block includes the logic for standalone interviews.
+  Delete mandatory: True to include in another interview
+mandatory: True
+code: |
+  al_intro_screen
+  response_to_support_intro
+  behind_on_payments_fiy
+  MLH_standard_intro_pages
+  interview_order_response_to_support
+  # Store anonymous data for analytics / statistics
+  store_variables_snapshot(
+      persistent=True,
+      data={
+          "zip": showifdef("users[0].address.zip"),
+          "reached_interview_end": True,
+      },
+  )
+  response_to_support_download
+---
+id: Response_to_Motion_Regarding_Child_Support
+question: |
+  Welcome to Michigan Legal Help's Do-It-Yourself Response Motion To Change or Get Child Support tool.
+subquestion: |
+  If you received a Motion Regarding Support from your child’s other parent, you can respond in writing to the other parent and the court before you go to the hearing.
+  Answer the following questions to complete a Response to Motion Regarding Child Support in Michigan.
+
+  You must file your response at least 3 days before the hearing.
+  You must mail the other parent a copy of your response at least 5 days before the hearing or have a copy personally delivered to them at least 3 days before the hearing.
+continue button field: response_to_support_intro
+---
+question: 
+  You may want to speak with a Lawyer
+subquestion: |
+  If you are behind on child support payments, you may want to talk to a lawyer before going to court.
+  The judge or referee may take enforcement action against you if you are behind in your payments. 
+
+  If you are in this situation, use the [Guide to Legal Help](https://michiganlegalhelp.org/guide-to-legal-help) to look for a lawyer in your area.
+  Otherwise, click Continue.
+continue button field: behind_on_payments_fiy
+---
+id: has_existing_case
+question: |
+  Did you receive a *Motion Regarding Support* in an existing Michigan family court case?
+subquestion: |
+  The motion could be filed in a divorce, separate maintenance, paternity, custody, or family support case.
+fields:
+  - Did you receive a Motion Regarding Support in an Michigan family case?: has_existing_motion
+    datatype: yesnoradio
+---
+id: existing_motion_kickout
+event: existing_motion_kickout
+question: |
+  You cannot use this tool if you haven't received a Motion Regarding Support
+subquestion: |
+  You said you did not receive a Motion Regarding Support in an existing Michigan divorce, separate maintenance, paternity, custody, or family support case.
+  You must have received one to continue to use this tool.
+  
+  If you made a mistake, click the **Undo** button. Otherwise, click the **Exit** button to return to Michigan Legal Help.
+buttons:
+  - Exit: exit
+    url: https://michiganlegalhelp.org
+---
+id: what_you_will_need
+question: |
+  What you will need to complete this form
+subquestion: |
+  To complete this form, you will need:
+
+  * the case number,
+  * court information, and
+  * information about the parties from your existing case
+
+  ${ collapse_template(where_info_on_papers_template) }
+continue button field: what_you_will_need
+---
+template: where_info_on_papers_template
+subject: |
+  Where can I find this information?
+content: |
+  Here is an example of where you can find this information on your court papers.
+
+  * The court information is circled in blue, on the top left.
+  * The case number is circled in yellow, on the top right.
+  * The information about the parties is circled in red
+
+  ${ image_court_papers.show(width="100%") }
+---
+code: |
+  court_index = next(court_list.filter_courts_by_2([county_choice], ['circuit'], column_1='address_county', column_2='type'))[0]
+---
+template: where_date_uniform_court_order
+subject: |
+  Where can I find the date on my order forms?
+content: |
+  If the support order was entered on a Uniform Child Support Order form in Michigan,
+  you can find the date the order was entered on the last page of the order.
+
+  ${ image_uniform_order_date.show(width="100%") }
+
+  If there is have a different type of support order, the date that the order was entered is usually found at the end of the order, near the judge’s signature.
+---
+id: Is there already a child support order in your family support case
+question: |
+  Is there already a child support order in your family support case?
+fields:
+  - "Is there already a child support order in your case?": has_existing_support_order
+    datatype: yesnoradio
+  - "Date of the most recent order or judgment": recent_judgment_date
+    datatype: date
+    max: ${ today() }
+    show if: has_existing_support_order
+  - note: |
+      ${ collapse_template(where_date_uniform_court_order) }
+    show if: has_existing_support_order
+---
+question: |
+  The information you put on your form is a public record
+subquestion: |
+  All of the information you supply, including your address and telephone information,
+  will be included on forms that you file with the court and deliver to the Defendant.
+
+  Keep in mind that your case file is a public record and anyone could ask to look at it and see your address and phone number.
+
+  ${ collapse_template(confidential_how_to)}
+continue button field: public_record_fyi
+---
+template: confidential_how_to
+subject: |
+  What if I'm afraid for my safety if this information is discovered by the other party or someone else
+content: |
+  To keep your address confidential, you need to have one of the following:
+
+  * A Personal Protection Order or other order which keeps your address confidential, OR
+  * On a [Uniform Child Custody Jurisdiction Enforcement Act Affidavit form](https://courts.michigan.gov/Administration/SCAO/Forms/courtforms/mc416.pdf),
+    you need to state that you and/or your children’s safety would be at risk if you disclose your address.
+
+  In either one of these scenarios, you can use a confidential address and phone number (such as the address and phone number
+  of a friend or relative who has given their permission, or a Post Office Box) instead of your residential address and personal phone number.
+---
+id: costs_signpost
+question: |
+  Amounts of child support in current order
+subquestion: |
+  The next few questions are about the amounts of child support in the current order.
+  You will be asked about base support, ordinary medical costs, and child care costs.
+
+  ${ collapse_template(explain_costs) }
+continue button field: costs_signpost
+---
+id: finding support signpost
+question: |
+  Finding amount of support
+subquestion: |
+  Michigan child support orders are entered on a form called a Uniform Child Support Order.
+  You can see how much of each type of support was ordered on the current Uniform Child Support Order.
+
+  If you don’t have a copy of the Uniform Child Support Order,
+  you can use the amounts the Defendant included in the Motion Regarding Support if they are correct.
+  To get a copy of the child support order, go to the circuit court clerk’s office or the Friend of the Court.
+
+  ${ collapse_template(where_support_amounts) }
+continue button field: finding_support_signpost
+---
+template: explain_costs
+subject: |
+  Can you explain these terms?
+content: |
+  **Base support** is the ordinary monthly child support amount for the general care and needs of a child.
+
+  **Ordinary medical costs** are uninsured costs for things like office visits and prescription co-pays.
+
+  **Child care costs** are used to allow a parent to work, look for work, or go to school. For most children, the child care obligation ends around age 12, but it may last longer if the child’s health or safety requires it.
+
+  To learn more, read [Child Support in a Nutshell](https://michiganlegalhelp.org/self-help-tools/family/child-support-nutshell).
+---
+template: where_support_amounts
+subject: |
+  Where is the amount of support in the current support order?
+content: |
+  The support amounts can be found in the table at the bottom of the first page of your current support order,
+  as seen in the red rectangle in the image below. 
+
+  ${ image_support_amount.show(width="100%") }
+---
+id: who_paid
+question: |
+  Who was ordered to pay support in that order?
+fields:
+  - no label: who_paid
+    choices:
+      - Plaintiff (${ plaintiffs[0] }): plaintiff
+      - Defendant (${ defendants[0] }): defendant
+---
+depends on:
+  - user_started_case
+  - who_paid
+code: |
+  does_user_pay_support = (user_started_case and who_paid == "plaintiff") and (not user_started_case and who_paid == "defendant")
+---
+question: |
+  What is the subtotal amount on your current Uniform Child Support Order?
+subquestion: |
+  ${ collapse_template(where_subtotal_amount) }
+fields:
+  - "What is the subtotal amount?": subtotal_amount
+    datatype: currency
+    min: 0
+  - "How often ${ 'do you' if does_user_pay_support else f'does {defendants[0].name.familiar()}' } pay that support?": support_time_period
+    input type: dropdown
+    choices:
+      - Weekly: week
+      - Month: month
+      - Other: other
+  - "What is the time period?": support_time_period
+    show if:
+      variable: support_time_period
+      is: other
+---
+id: child care costs
+question: |
+  What are the child care costs?
+fields:
+  - ${ 'Were you' if does_user_pay_support else f'Was {defendants[0].name.familiar()}' } ordered to pay child care costs?: paid_child_care
+    datatype: yesnoradio
+  - How much ${ 'do you' if does_user_pay_support else f'does {defendants[0].name.familiar()}' } pay for child care?: child_care_amount
+    datatype: currency
+    min: 0
+    show if: paid_child_care
+---
+# DA has issues with recursive js show if depending on show if'd things. Separated into diff block to fix.
+if: paid_child_care
+id: just child_care_time_period
+question: |
+  "How often ${ 'do you' if does_user_pay_support else f'does {defendants[0].name.familiar()}' } pay child care?"
+fields:
+  - no label: child_care_time_period
+    input type: dropdown
+    choices:
+      - Weekly: week
+      - Monthly: month
+      - Other: other
+  - "What is the time period?": child_care_time_period
+    show if:
+      variable: child_care_time_period
+      is: other
+---
+id: Who was ordered to pay ordinary medical costs
+question: |
+  Who was ordered to pay ordinary medical costs?
+subquestion: |
+  Ordinary medical costs are uninsured costs for things like office visits and prescription co-pays.
+  Ordinary medical costs are different than additional uninsured health care costs, which are
+  listed in a different part of the Uniform Child Support Order.
+fields:
+  - ${ 'Were you' if does_user_pay_support else f'Was {defendants[0].name.familiar()}' } ordered to pay ordinary medical care costs?: paid_medical_costs
+    datatype: yesnoradio
+  - How much ${ 'do you' if does_user_pay_support else f'does {defendants[0].name.familiar()}' } pay for ordinary medical care?: medical_care_amount
+    datatype: currency
+    min: 0
+    show if: paid_medical_costs
+---
+id: just medical_care_time_period
+if: paid_medical_costs
+question: |
+  How often ${ 'do you' if does_user_pay_support else f'does {defendants[0].name.familiar()}' } pay that ordinary medical care?
+fields:
+  - no label: medical_care_time_period
+    input type: dropdown
+    choices:
+      - Weekly: week
+      - Monthly: month
+      - Other: other
+  - "What is the time period?": medical_care_time_period
+    show if:
+      variable: medical_care_time_period
+      is: other
+---
+id: Do you agree with what the Defendant s Motion Regarding Support says about the change in circumstances
+question: |
+  Have the conditions regarding supported changed?
+subquestion: |
+  Look at paragraph 5 (section G) of the defendant's *Motion Regarding Support*. Is the box in front of "Conditions regarding support have changed as follows:" checked?
+fields:
+  - "Is the box checked": conditions_changed_in_motion
+    datatype: yesnoradio
+---
+if: conditions_changed_in_motion
+question: |
+  Change in circumstances
+subquestion: |
+  The court may only change the amount of child support if there has been a change in circumstances. Examples of changes in circumstances are:
+  
+  * The needs of the children have changed;
+  * There has been a change in custody;
+  * The parent who pays child support has had a change in income; or
+  * The parent who receives child support has had a change in income.
+fields:
+  - "Do you agree with what ${ other_parties[0].name.familiar() }'s *Motion Regarding Support* says about the change in circumstances?": agree_conditions_changed
+    datatype: yesnoradio
+  - "Explain in detail what you do not agree with and why. Include all necessary facts.": conditions_changed_disagree_reason
+    input type: area
+    show if:
+      variable: agree_conditions_changed
+      is: False
+---
+id: Do you agree to start or change support
+question: |
+  Have you and ${ other_parties[0].name.familiar() } agreed on who should pay support and how much?
+fields:
+  - no label: agree_with_other_on_support
+    datatype: yesnoradio
+  - note: |
+      Look at paragraph 6 of ${ other_parties[0].name.familiar() }'s Motion Regarding Support.
+    show if: agree_with_other_on_support
+  - "Is the box in paragraph 6 checked?": para_6_box_checked
+    datatype: yesnoradio
+    show if: agree_with_other_on_support
+---
+if: para_6_box_checked
+question: |
+  Do you and ${ other_parties[0].name.familiar } agree exactly?
+subquestion: |
+  Carefully read the terms that ${ other_parties[0].name.familiar() } says you have agreed on.
+
+  Then complete this sentence:
+fields:
+  - "${ other_parties[0].name.familiar() } agreed to start or change support": agree_with_others_support_answer
+    choices:
+      - "exactly as stated in the motion": agree_exactly
+      - "but not as stated in the motion": agree_not_as_stated
+  - "Explain in details what you did agree on. Include all necessary facts.": not_as_stated_reason
+    input type: area
+    show if:
+      variable: agree_with_others_support_answer
+      is: agree_not_as_stated
+---
+if: not para_6_box_checked
+question: |
+  Agreement on Amounts of child support
+subquestion: |
+  Look at paragraph 7 of ${ other_parties[0].name.familiar() }'s Motion Regarding Support.
+  Carefully read the support terms ${ other_parties[0].name.familiar() } is asking the court to order.
+fields:
+  - "Choose one": agree_with_other_on_support
+    choices:
+      - "I agree with the amounts of child support ${ other_parties[0].name.familiar() } asked for in the motion": does_agree
+      - "I **do not** agree with the amounts of child support the Defendant asked for in the motion.": does_not_agree
+---
+question: |
+  How do you want to court to order child support to be paid?
+subquestion: |
+  You will now be asked questions about how you want the court to order child support to be paid.
+
+  You may ask the court for what you want, but the court will probably use the Michigan Child Support Formula to make its decision, so you may not get what you ask for.
+
+  The Michigan Child Support Formula uses:
+
+  * The parents' incomes
+  * The number of nights per year (“overnights”) the children spend with each parent
+  * The number of children
+  * Medical costs
+  * Child care costs
+  * Other factors
+
+  You can use the [MiChildSupport Calculator](https://micase.state.mi.us/calculatorapp/public/welcome/load.html) on the Michigan Department of Health and Human Services website to find out what the support amount might be in your case.
+continue button field: changes_requested_signpost
+---
+id: is_parent
+question: |
+  Are you the parent of the child or children named in this support order?
+fields:
+  - no label: is_parent
+    datatype: yesnoradio
+---
+id: third_party_named
+question: |
+  Is a third party (a non-parent) named in your existing family court case?
+fields:
+  - no label: third_party_named
+    datatype: yesnoradio
+---
+id: parent_third_party_kickout
+event: parent_third_party_kickout
+question: |
+  You cannot use this tool to prepare a Response to Motion Regarding Support
+subquestion: |
+  This tool may only be used to prepare a response in a case between two parents, with no third-party involvement.
+
+  If you made a mistake, click the **Undo** button. Otherwise, click the **Exit** button to return to Michigan Legal Help.
+buttons:
+  - Exit: exit
+    url: https://michiganlegalhelp.org
+---
+id: what is the user's role?
+question: |
+  What party are you in your existing case?
+subquestion: |
+  You are called the “moving party” because you are filing this Response to Motion Regarding Support.  
+
+  In your existing divorce, separate maintenance, paternity, custody, or family support case, you are either the Plaintiff or the Defendant.
+
+  What party are you in your case?
+
+  ${ collapse_template(help_user_ask_role_template) }
+fields: 
+  - no label: user_ask_role
+    datatype: radio
+    choices:
+      - I am the Plaintiff: plaintiff
+      - I am the Defendant: defendant
+  - note: |
+      Okay, you are the **Plaintiff** in this case. The other 
+      side is the Defendant.
+    show if:
+      variable: user_ask_role
+      is: "plaintiff"
+  - note: |
+      Okay, you are the **Defendant** in this case. The other 
+      side is the Plaintiff.
+    show if:
+      variable: user_ask_role
+      is: "defendant"
+---
+id: who_paid
+question: |
+  Who was ordered to pay support in the current support order?
+fields:
+  - no label: who_paid
+    datatype: radio
+    choices:
+      - ${ users[0] } (you): user
+      - ${ other_parties[0] }: other_party 
+---
+depends on:
+  - who_paid
+  - user_started_case
+code: |
+  if (who_paid == "user" and user_started_case) or (who_paid == "other_party" and not user_started_case):
+    which_side_paid = "plaintiff" 
+  else:
+    which_side_paid = "defendant"
+---
+template: where_subtotal_amount
+subject: |
+  Where do I find the Subtotal amount?
+content: |
+  You can find the subtotal amount on the first page of the uniform child support order. It is highlighted in yellow
+  in it's full table below.
+
+  ${ image_subtotal_amount.show(width="100%") }
+---
+template: what_is_child_care
+content: |
+  Child care costs are used to allow a parent to work, look for work, or go to school.
+  For most children the child care obligation ends around age 12, but it may be longer if the child’s health or safety requires it.
+---
+id: Do you agree with what is being asked for in the motion
+question: |
+  Do you agree with what is being asked for in the motion?
+fields:
+  - "Do you agree with what is being asked for in the motion?": agree_with_motion
+    datatype: yesnoradio
+  - "Support should be paid as follows:": support_should_be_paid_as_follows
+    input type: area
+---
+id: preview response_to_support
+question: |
+  Preview your form before you sign it
+subquestion: |
+  Here is a preview of the form you will sign on the next page.   
+  
+  ${ al_court_bundle.as_pdf(key='preview') }
+
+  Click the image to open it in a new tab. Click the "Edit answers" button
+  to edit your answers.
+
+  ${ action_button_html(url_action('review_response_to_support'), label='Edit answers', color='info') }
+  
+  Remember to come back to this window to continue and sign your form.
+continue button field: response_to_support_preview_question    
+---
+code: |
+  signature_fields = ['users[0].signature']
+---
+code: |
+  service_signature_date = DAEmpty()
+---
+depends on:
+  - who_paid
+  - user_started_case
+code: |
+  if (who_paid == "user" and user_started_case) or (who_paid == "other_party" and not user_started_case):
+    which_side_paid = "plaintiff" 
+  else:
+    which_side_paid = "defendant"
+---
+code: |
+  disagree_conditions_changed = not agree_conditions_changed
+---
+code: |
+  disagree_with_motion = not agree_with_motion
+---
+code: |
+  # This is a placeholder for the addresses that will be searched
+  # for matching address to court. Edit if court venue is based on 
+  # a different address than the user's
+  [user.address.address for user in users.complete_elements()]
+  addresses_to_search = [user.address for user in users.complete_elements()]
+---
+id: response_to_support review screen
+event: review_response_to_support
+question: |
+  Review your answers
+review:
+  - Edit: docket_number
+    button: |
+      **Docket number**:
+      ${ docket_number }
+  - Edit: trial_court
+    button: |
+      **Trial court**
+  
+      % if defined("trial_court.address.address"):
+      * address: ${ trial_court.address.block() }
+      % endif
+      % if defined("trial_court.phone_number"):
+      * phone_number: ${ trial_court.phone_number }
+      % endif
+  - Edit: plaintiffs.revisit
+    button: |
+      **Plaintiffs**
+
+      % for item in plaintiffs:
+        * ${ item }
+      % endfor
+  - Edit: defendants.revisit
+    button: |
+      **Defendants**
+
+      % for item in defendants:
+        * ${ item }
+      % endfor
+  - Edit: recent_judgment_date
+    button: |
+      **Date of the most recent order or judgment**:
+      ${ recent_judgment_date }
+  - Edit: has_existing_support_order
+    button: |
+      **Is there already a child support order in your case?**:
+      ${ word(yesno(has_existing_support_order)) }
+  - Edit: subtotal_amount
+    button: |
+      **What is the subtotal amount listed on your current Uniform Child Support Order?**:
+      ${ currency(subtotal_amount) }
+  - Edit: support_time_period
+    button: |
+      **How often do you pay that support?**:
+      ${ support_time_period }
+  - Edit: paid_child_care
+    button: |
+      **Were they ordered to pay child care costs?**:
+      ${ word(yesno(paid_child_care)) }
+  - Edit: child_care_amount
+    button: |
+      **Child care amount**:
+      ${ currency(child_care_amount) }
+  - Edit: child_care_time_period
+    button: |
+      **How often do you pay that child care?**:
+      ${ child_care_time_period }
+  - Edit: paid_medical_costs
+    button: |
+      **Were they ordered to pay ordinary medical care costs?**:
+      ${ word(yesno(paid_medical_costs)) }
+  - Edit: medical_care_amount
+    button: |
+      **Medical care amount**:
+      ${ currency(medical_care_amount) }
+  - Edit: medical_care_time_period
+    button: |
+      **Medical care time period**:
+      ${ medical_care_time_period }
+  - Edit: conditions_changed_in_motion
+    button: |
+      **Conditions changed in motion**:
+      ${ word(yesno(conditions_changed_in_motion)) }
+  - Edit: agree_conditions_changed
+    button: |
+      **Do you agree that the conditions regarding support have changed, as stated in the motion?**:
+      ${ word(yesno(agree_conditions_changed)) }
+  - Edit: disagree_conditions_changed
+    button: |
+      **Disagree conditions changed**:
+      ${ disagree_conditions_changed }
+  - Edit: conditions_changed_disagree_reason
+    button: |
+      **Explain in detaill what you do not agree with and why. Include all necessary facts.**:
+      > ${ single_paragraph(conditions_changed_disagree_reason) }
+  - Edit: agree_with_other_on_support
+    button: |
+      **Do you agree with the other party to start or change support?**:
+      ${ word(yesno(agree_with_other_on_support)) }
+  - Edit: agree_with_others_support_answer
+    button: |
+      **Do you agree with the other party to start or change support exactly as stated in the motion?**:
+      % if agree_with_others_support_answer == "agree_exactly":
+      I agree exactly as stated.
+      % else:
+      I do not agree as stated.
+      % endif
+  - Edit: not_as_stated_reason
+    button: |
+      **Not as stated reason**:
+      > ${ single_paragraph(not_as_stated_reason) }
+  - Edit: agree_with_motion
+    button: |
+      **Do you agree with what is being asked for in the motion?**:
+      ${ word(yesno(agree_with_motion)) }
+  - Edit: disagree_with_motion
+    button: |
+      **Disagree with motion**:
+      ${ disagree_with_motion }
+  - Edit: support_should_be_paid_as_follows
+    button: |
+      **Support should be paid as follows:**:
+      > ${ single_paragraph(support_should_be_paid_as_follows) }
+  - Edit: users.revisit
+    button: |
+      **Users**
+
+      % for item in users:
+        * ${ item }
+      % endfor
+  - Edit: signature_date
+    button: |
+      **Date of signature**:
+      ${ signature_date }
+  - Edit: service_signature_date
+    button: |
+      **Date of service signature**:
+      ${ service_signature_date }
+---
+continue button field: plaintiffs.revisit
+question: |
+  Edit plaintiffs
+subquestion: |
+  ${ plaintiffs.table }
+
+  ${ plaintiffs.add_action() }
+---
+table: plaintiffs.table
+rows: plaintiffs
+columns:
+  - Name: |
+      row_item.name.full() if defined("row_item.name.first") else ""
+edit:
+  - name.first
+confirm: True
+
+---
+continue button field: defendants.revisit
+question: |
+  Edit defendants
+subquestion: |
+  ${ defendants.table }
+
+  ${ defendants.add_action() }
+---
+table: defendants.table
+rows: defendants
+columns:
+  - Name: |
+      row_item.name.full() if defined("row_item.name.first") else ""
+edit:
+  - name.first
+confirm: True
+
+---
+continue button field: users.revisit
+question: |
+  Edit users
+subquestion: |
+  ${ users.table }
+
+  ${ users.add_action() }
+---
+table: users.table
+rows: users
+columns:
+  - Signature: |
+      row_item.signature if defined("row_item.signature") else ""
+edit:
+  - signature
+confirm: True
+
+---
+id: download response_to_support
+event: response_to_support_download
+question: |
+  All done
+subquestion: |
+  Thank you ${users}. Your form is ready to download and deliver.
+  
+  View, download and send your form below. Click the "Edit answers" button to fix any mistakes.
+
+  ${ action_button_html(url_action('review_response_to_support'), label='Edit answers', color='info') }
+  
+  
+  ${ al_user_bundle.download_list_html() }
+  
+
+  ${ al_user_bundle.send_button_html(show_editable_checkbox=False) }
+
+progress: 100
+---
+# ALDocument objects specify the metadata for each template
+objects:
+  - response_to_support_Post_interview_instructions: ALDocument.using(title="Instructions", filename="response_to_support_next_steps.docx", enabled=True, has_addendum=False)
+  - response_to_support_attachment: ALDocument.using(title="Response to Motion Regarding Child Support", filename="response_to_support", enabled=True, has_addendum=True, default_overflow_message=AL_DEFAULT_OVERFLOW_MESSAGE)
+---
+# Bundles group the ALDocuments into separate downloads, such as for court and for the user
+objects:
+  - al_user_bundle: ALDocumentBundle.using(elements=[response_to_support_post_interview_instructions, response_to_support_attachment], filename="response_to_support", title="All forms to download for your records", enabled=True)
+  - al_court_bundle: ALDocumentBundle.using(elements=[response_to_support_attachment],  filename="response_to_support", title="All forms to deliver to court", enabled=True)
+---
+# Each attachment defines a key in an ALDocument. We use `i` as the placeholder here so the same template is 
+# used for "preview" and "final" keys, and logic in the template checks the value of 
+# `i` to show or hide the user's signature
+attachment:
+  name: Post-interview-Instructions
+  filename: response_to_support_next_steps
+  docx template file: response_to_support_next_steps.docx
+  variable name: response_to_support_Post_interview_instructions[i]
+  skip undefined: True
+  tagged pdf: True
+---
+attachment:
+  name: response_to_support
+  filename: response_to_support
+  variable name: response_to_support_attachment[i]
+  skip undefined: True
+  pdf template file: foc51.pdf
+  fields:
+      - "trial_court_circuit": ${ the_court.number if the_court.type == 'circuit' else '' }
+      - "docket_number": ${ docket_number }
+      - "trial_court_district": ${ the_court.number if the_court.type == 'district' else '' }
+      - "trial_court_address_on_one_line": ${ trial_court.address.on_one_line() }
+      - "trial_court_phone_number": ${ trial_court.phone_number }
+      - "plaintiff_is_moving_party": ${ user_started_case }
+      - "defendant_is_moving_part": ${ user_started_case }
+      - "plaintiffs": ${ plaintiffs }
+      - "defendants": ${ defendants }
+      - "third_party_is_moving_party": False
+      - "judgement_entered_date": ${ recent_judgment_date.format() }
+      - "judgment_entered": ${ has_existing_support_order }
+      - "no_support_order": ${ not has_existing_support_order }
+      - "third_parties": ""
+      - "paid_support_costs": ${ has_existing_support_order }
+      - "plaintiff_pays_support": ${ has_existing_support_order and which_side_paid == "plaintiff" }
+      - "defendant_pays_support": ${ has_existing_support_order and which_side_paid == "defendant" }
+      - "support_amount": ${ thousands(subtotal_amount, show_decimals=True) if has_existing_support_order else "" }
+      - "support_time_period": ${ support_time_period if has_existing_support_order else "" }
+      - "paid_child_care": ${ has_existing_support_order and paid_child_care }
+      - "plaintiff_pays_care": ${ has_existing_support_order and paid_child_care and which_side_paid == "plaintiff" }
+      - "defendant_pays_care": ${ has_existing_support_order and paid_child_care and which_side_paid == "defendant" }
+      - "child_care_amount": ${ thousands(child_care_amount, show_decimals=True) if has_existing_support_order else "" }
+      - "child_care_time_period": ${ child_care_time_period if has_existing_support_order else "" }
+      - "paid_medical_costs": ${ has_existing_support_order and paid_medical_costs }
+      - "plaintiff_pays_medical": ${ has_existing_support_order and paid_medical_costs and which_side_paid == "plaintiff" }
+      - "defendant_pays_medical": ${ has_existing_support_order and paid_medical_costs and which_side_paid == "defendant" }
+      - "medical_care_amount": ${ thousands(medical_care_amount, show_decimals=True) if has_existing_support_order else "" }
+      - "medical_care_time_period": ${ medical_care_time_period if has_existing_support_order else "" }
+      - "conditions_changed_in_motion": ${ conditions_changed_in_motion }
+      - "agree_conditions_changed": ${ agree_conditions_changed }
+      - "disagree_conditions_changed": ${ disagree_conditions_changed }
+      - "conditions_changed_disagree_reason": ${ response_to_support_attachment.safe_value("conditions_changed_disagree_reason") }
+      - "agree_with_other_on_support": ${ agree_with_other_on_support }
+      - "agree_exactly_with_other": ${ agree_with_others_support_answer == "agree_exactly" }
+      - "agree_not_as_stated": ${ agree_with_others_support_answer == "agree_not_as_stated" }
+      - "not_as_stated_reason": ${ response_to_support_attachment.safe_value("not_as_stated_reason") }
+      - "agree_with_motion": ${ agree_with_motion }
+      - "disagree_with_motion": ${ disagree_with_motion }
+      - "support_should_be_paid_as_follows": ${ response_to_support_attachment.safe_value("support_should_be_paid_as_follows") }
+      - "users1_signature": ${ users[0].signature }
+      - "signature_date": ${ signature_date }
+      - "service_signature_date": ${ service_signature_date }
+---
+code: |
+  response_to_support_attachment.overflow_fields["conditions_changed_disagree_reason"].overflow_trigger = 340
+  response_to_support_attachment.overflow_fields["conditions_changed_disagree_reason"].label = "Explain in detaill what you do not agree with and why. Include all necessary facts."
+  response_to_support_attachment.overflow_fields["not_as_stated_reason"].overflow_trigger = 340
+  response_to_support_attachment.overflow_fields["not_as_stated_reason"].label = "Not as stated reason"
+  response_to_support_attachment.overflow_fields["support_should_be_paid_as_follows"].overflow_trigger = 616
+  response_to_support_attachment.overflow_fields["support_should_be_paid_as_follows"].label = "Support should be paid as follows:"
+  response_to_support_attachment.overflow_fields.gathered = True
+
+
+
