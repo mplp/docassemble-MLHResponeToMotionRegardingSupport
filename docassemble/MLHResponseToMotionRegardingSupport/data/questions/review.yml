@@ -1,0 +1,195 @@
+---
+event: review_intro
+code: review_response_to_support
+---
+event: review_pending_motion
+code: review_response_to_support
+---
+event: review_your_info
+code: review_response_to_support
+---
+event: review_other_parent
+code: review_response_to_support
+---
+event: review_current_order
+code: review_response_to_support
+---
+event: review_changes
+code: review_response_to_support
+---
+event: review_conclusion
+code: review_response_to_support
+---
+id: response_to_support review screen
+event: review_response_to_support
+question: |
+  Review your answers
+review:
+  - Edit: docket_number
+    button: |
+      **Docket number**:
+      ${ docket_number }
+  - Edit: trial_court
+    button: |
+      **Trial court**
+  
+      % if defined("trial_court.address.address"):
+      * address: ${ trial_court.address.block() }
+      % endif
+      % if defined("trial_court.phone_number"):
+      * phone_number: ${ trial_court.phone_number }
+      % endif
+  - Edit: plaintiffs.revisit
+    button: |
+      **Plaintiffs**
+
+      % for item in plaintiffs:
+        * ${ item }
+      % endfor
+  - Edit: defendants.revisit
+    button: |
+      **Defendants**
+
+      % for item in defendants:
+        * ${ item }
+      % endfor
+  - Edit: recent_judgment_date
+    button: |
+      **Date of the most recent order or judgment**:
+      ${ recent_judgment_date }
+  - Edit: has_existing_support_order
+    button: |
+      **Is there already a child support order in your case?**:
+      ${ word(yesno(has_existing_support_order)) }
+  - Edit: subtotal_amount
+    button: |
+      **What is the subtotal amount listed on your current Uniform Child Support Order?**:
+      ${ currency(subtotal_amount) }
+  - Edit: support_time_period
+    button: |
+      **How often do you pay that support?**:
+      ${ support_time_period }
+  - Edit: paid_child_care
+    button: |
+      **Were they ordered to pay child care costs?**:
+      ${ word(yesno(paid_child_care)) }
+  - Edit: child_care_amount
+    button: |
+      **Child care amount**:
+      ${ currency(child_care_amount) }
+  - Edit: child_care_time_period
+    button: |
+      **How often do you pay that child care?**:
+      ${ child_care_time_period }
+  - Edit: paid_medical_costs
+    button: |
+      **Were they ordered to pay ordinary medical care costs?**:
+      ${ word(yesno(paid_medical_costs)) }
+  - Edit: medical_care_amount
+    button: |
+      **Medical care amount**:
+      ${ currency(medical_care_amount) }
+  - Edit: medical_care_time_period
+    button: |
+      **Medical care time period**:
+      ${ medical_care_time_period }
+  - Edit: conditions_changed_in_motion
+    button: |
+      **Conditions changed in motion**:
+      ${ word(yesno(conditions_changed_in_motion)) }
+  - Edit: agree_conditions_changed
+    button: |
+      **Do you agree that the conditions regarding support have changed, as stated in the motion?**:
+      ${ word(yesno(agree_conditions_changed)) }
+  - Edit: conditions_changed_disagree_reason
+    button: |
+      **Explain in detail what you do not agree with and why. Include all necessary facts.**:
+      > ${ single_paragraph(conditions_changed_disagree_reason) }
+  - Edit: agreed_on_who_pays
+    button: |
+      **Do you agree with the other party to start or change support?**:
+      ${ word(yesno(agreed_on_who_pays)) }
+  - Edit: agree_with_others_support_answer
+    button: |
+      **Do you agree with the other party to start or change support exactly as stated in the motion?**:
+      % if agree_with_others_support_answer == "agree_exactly":
+      I agree exactly as stated.
+      % else:
+      I do not agree as stated.
+      % endif
+  - Edit: not_as_stated_reason
+    button: |
+      **Not as stated reason**:
+      > ${ single_paragraph(not_as_stated_reason) }
+  - Edit: agree_with_motion
+    button: |
+      **Do you agree with what is being asked for in the motion?**:
+      ${ word(yesno(agree_with_motion)) }
+  - Edit: users.revisit
+    button: |
+      **Users**
+
+      % for item in users:
+        * ${ item }
+      % endfor
+  - Edit: signature_date
+    button: |
+      **Date of signature**:
+      ${ signature_date }
+  - Edit: service_signature_date
+    button: |
+      **Date of service signature**:
+      ${ service_signature_date }
+---
+continue button field: plaintiffs.revisit
+question: |
+  Edit plaintiffs
+subquestion: |
+  ${ plaintiffs.table }
+
+  ${ plaintiffs.add_action() }
+---
+table: plaintiffs.table
+rows: plaintiffs
+columns:
+  - Name: |
+      row_item.name.full() if defined("row_item.name.first") else ""
+edit:
+  - name.first
+confirm: True
+
+---
+continue button field: defendants.revisit
+question: |
+  Edit defendants
+subquestion: |
+  ${ defendants.table }
+
+  ${ defendants.add_action() }
+---
+table: defendants.table
+rows: defendants
+columns:
+  - Name: |
+      row_item.name.full() if defined("row_item.name.first") else ""
+edit:
+  - name.first
+confirm: True
+
+---
+continue button field: users.revisit
+question: |
+  Edit users
+subquestion: |
+  ${ users.table }
+
+  ${ users.add_action() }
+---
+table: users.table
+rows: users
+columns:
+  - Signature: |
+      row_item.signature if defined("row_item.signature") else ""
+edit:
+  - signature
+confirm: True
