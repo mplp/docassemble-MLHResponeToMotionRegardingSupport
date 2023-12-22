@@ -113,11 +113,14 @@ id: interview_order_response_to_support
 code: |
   # Set the allowed courts for this interview
   allowed_courts = []
-  nav.set_section("review_response_to_support")
+  nav.set_section("review_intro")
+  set_progress(12.5)
   # Below sets the user_role and user_ask_role by asking a question.
   # You can set user_ask_role directly instead to either 'plaintiff' or 'defendant'
   what_you_will_need
 
+  nav.set_section("review_pending_motion")
+  set_progress(25)
   if not has_existing_motion:
     existing_motion_kickout
   docket_number
@@ -134,21 +137,29 @@ code: |
   user_started_case
   public_record_fyi
 
+  nav.set_section("review_your_info")
+  set_progress(37.5)
   users.gather()
+  nav.set_section("review_other_parent")
+  set_progress(50)
   other_parties.gather()
 
+  nav.set_section("review_current_order")
+  set_progress(62.5)
   costs_signpost
   finding_support_signpost
 
   set_all_existing_support
-  set_progress(14)
   if conditions_changed_in_motion:
     agree_conditions_changed
     
+  nav.set_section("review_who_pays")
+  set_progress(75)
   agreed_on_who_pays
-  set_progress(28)
   agree_with_motion
   if agreed_on_who_pays and agree_with_others_support_answer == "does_not_agree" or not agree_with_motion:
+    nav.set_section("review_changes")
+    set_progress(87.5)
     changes_requested_signpost
     children_number
     who_pays_new
@@ -159,10 +170,12 @@ code: |
     asking_for_payer_benefits_credit
 
   nav.set_section("review_conclusion")
+  set_progress(95)
   efile_notice
   if esign:
     signature_date
 
+  set_progress(100)
   interview_order_response_to_support = True
 ---
 code: |
@@ -225,6 +238,7 @@ subquestion: |
   The motion could be filed in a divorce, separate maintenance, paternity, custody, or family support case.
 fields:
   - Did you receive a Motion Regarding Support in an Michigan family case?: has_existing_motion
+    label above field: True
     datatype: yesnoradio
 ---
 id: existing_motion_kickout
@@ -236,6 +250,9 @@ subquestion: |
   You must have received one to continue to use this tool.
   
   If you made a mistake, click the **Undo** button. Otherwise, you can return to [Michigan Legal Help](https://michiganlegalhelp.org) for other legal information or resources.
+buttons:
+  - Exit: exit
+    url: https://michiganlegalhelp.org
 ---
 id: what_you_will_need
 question: |
@@ -507,27 +524,32 @@ id: Do you agree to start or change support
 question: |
   Have you and ${ other_parties[0].name.familiar() } agreed on who should pay support and how much?
 fields:
-  - no label: agreed_on_who_pays
+  - no label: user_agreed_on_who_pays
     datatype: yesnoradio
   - note: |
       Look at paragraph 6 of ${ other_parties[0].name.familiar() }'s Motion Regarding Support.
-    show if: agreed_on_who_pays
+    show if: user_agreed_on_who_pays
   - "Is the box in paragraph 6 checked?": para_6_box_checked
     datatype: yesnoradio
-    show if: agreed_on_who_pays
-  - note: |
+    show if: user_agreed_on_who_pays
+---
+if: user_agreed_on_who_pays and not para_6_box_checked
+question: |
+  ${ other_parties[0].name.familiar() }'s Motion
+subquestion: |
       Look at paragraph 7 of ${ other_parties[0].name.familiar() }'s Motion Regarding Support.
       Carefully read the support terms ${ other_parties[0].name.familiar() } is asking the court to order.
-    show if:
-      variable: para_6_box_checked
-      is: False
+fields:
   - "Choose one": agreed_on_who_pays
     choices:
       - "I agree with the amounts of child support ${ other_parties[0].name.familiar() } asked for in the motion": true
       - "I **do not** agree with the amounts of child support the Defendant asked for in the motion.": false
-    show if:
-      variable: para_6_box_checked
-      is: False
+---
+code: |
+  if not user_agreed_on_who_pays:
+    agreed_on_who_pays = False
+  if user_agreed_on_who_pays and para_6_box_checked:
+    agreed_on_who_pays = True
 ---
 if: para_6_box_checked
 question: |
@@ -537,7 +559,7 @@ subquestion: |
 
   Then complete this sentence:
 fields:
-  - "${ other_parties[0].name.familiar() } agreed to start or change support": agree_with_others_support_answer
+  - "${ other_parties[0].name.familiar() } and I agreed to start or change support": agree_with_others_support_answer
     choices:
       - "exactly as stated in the motion": agree_exactly
       - "but not as stated in the motion": agree_not_as_stated
@@ -588,6 +610,9 @@ subquestion: |
   This tool may only be used to prepare a response in a case between two parents, with no third-party involvement.
 
   If you made a mistake, click the **Undo** button. Otherwise, you can return to [Michigan Legal Help](https://michiganlegalhelp.org) for other legal information or resources.
+buttons:
+  - Exit: exit
+    url: https://michiganlegalhelp.org
 ---
 id: what is the user's role?
 question: |
@@ -656,8 +681,11 @@ id: Do you agree with what is being asked for in the motion
 question: |
   Do you agree with what is being asked for in the motion?
 fields:
-  - "Do you agree with what is being asked for in the motion?": agree_with_motion
-    datatype: yesnoradio
+  - no label: agree_with_motion
+    datatype: radio
+    choices:
+      - "Yes, I agree with the motion": True
+      - "No, I do not agree with the motion": False
 ---
 id: children number
 question: |
@@ -767,7 +795,6 @@ fields:
     label above field: True
     datatype: currency
     show if: asking_for_payer_benefits_credit
----
 ---
 id: preview response_to_support
 question: |
