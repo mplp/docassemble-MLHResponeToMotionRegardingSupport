@@ -146,18 +146,14 @@ code: |
 
   nav.set_section("review_current_order")
   set_progress(62.5)
-  costs_signpost
-  finding_support_signpost
-
   set_all_existing_support
+  nav.set_section("review_who_pays")
   if conditions_changed_in_motion:
     agree_conditions_changed
     
-  nav.set_section("review_who_pays")
   set_progress(75)
-  agreed_on_who_pays
-  agree_with_motion
-  if agreed_on_who_pays and agree_with_others_support_answer == "does_not_agree" or not agree_with_motion:
+  previously_agreed_on_support
+  if not agree_with_motion:
     nav.set_section("review_changes")
     set_progress(87.5)
     changes_requested_signpost
@@ -180,6 +176,9 @@ code: |
 ---
 code: |
   if has_existing_support_order:
+    costs_signpost
+    finding_support_signpost
+
     who_paid
     subtotal_amount
     if paid_child_care:
@@ -297,8 +296,11 @@ id: Is there already a child support order in your family support case
 question: |
   Is there already a child support order in your family support case?
 fields:
-  - "Is there already a child support order in your case?": has_existing_support_order
-    datatype: yesnoradio
+  - no label: has_existing_support_order
+    datatype: radio
+    choices:
+      - "Yes, there is a child support order in my case": True
+      - "No, there is not a child support order in my case": False
   - "Date of the most recent order or judgment": recent_judgment_date
     datatype: date
     max: ${ today() }
@@ -349,7 +351,7 @@ subquestion: |
   You can see how much of each type of support was ordered on the current Uniform Child Support Order.
 
   If you don’t have a copy of the Uniform Child Support Order,
-  you can use the amounts the Defendant included in the Motion Regarding Support if they are correct.
+  you can use the amounts ${ other_parties } included in the Motion Regarding Support if they are correct.
   To get a copy of the child support order, go to the circuit court clerk’s office or the Friend of the Court.
 
   ${ collapse_template(where_support_amounts) }
@@ -391,10 +393,10 @@ fields:
       How often does ${ other_parties[0].name.familiar() } pay that support?
       % endif
     field: support_time_period
-    input type: dropdown
+    datatype: radio
     choices:
       - Weekly: week
-      - Month: month
+      - Monthly: month
       - Other: other
   - "What is the time period?": support_time_period
     show if:
@@ -435,7 +437,7 @@ question: |
   % endif
 fields:
   - no label: child_care_time_period
-    input type: dropdown
+    datatype: radio
     choices:
       - Weekly: week
       - Monthly: month
@@ -445,9 +447,9 @@ fields:
       variable: child_care_time_period
       is: other
 ---
-id: Who was ordered to pay ordinary medical costs
+id: Whate are the ordinary medical costs
 question: |
-  Who was ordered to pay ordinary medical costs?
+  What are the ordinary medical costs?
 subquestion: |
   Ordinary medical costs are uninsured costs for things like office visits and prescription co-pays.
   Ordinary medical costs are different than additional uninsured health care costs, which are
@@ -482,7 +484,7 @@ question: |
   % endif
 fields:
   - no label: medical_care_time_period
-    input type: dropdown
+    datatype: radio
     choices:
       - Weekly: week
       - Monthly: month
@@ -492,7 +494,7 @@ fields:
       variable: medical_care_time_period
       is: other
 ---
-id: Do you agree with what the Defendant s Motion Regarding Support says about the change in circumstances
+id: Do you agree with what other party Motion Regarding Support says about the change in circumstances
 question: |
   Have the conditions regarding supported changed?
 subquestion: |
@@ -515,6 +517,7 @@ fields:
   - "Do you agree with what ${ other_parties[0].name.familiar() }'s *Motion Regarding Support* says about the change in circumstances?": agree_conditions_changed
     datatype: yesnoradio
   - "Explain in detail what you do not agree with and why. Include all necessary facts.": conditions_changed_disagree_reason
+    label above field: True
     input type: area
     show if:
       variable: agree_conditions_changed
@@ -533,23 +536,23 @@ fields:
     datatype: yesnoradio
     show if: user_agreed_on_who_pays
 ---
-if: user_agreed_on_who_pays and not para_6_box_checked
 question: |
   ${ other_parties[0].name.familiar() }'s Motion
 subquestion: |
       Look at paragraph 7 of ${ other_parties[0].name.familiar() }'s Motion Regarding Support.
       Carefully read the support terms ${ other_parties[0].name.familiar() } is asking the court to order.
 fields:
-  - "Choose one": agreed_on_who_pays
+  - "Choose one": agree_with_para_7
+    datatype: radio
     choices:
-      - "I agree with the amounts of child support ${ other_parties[0].name.familiar() } asked for in the motion": true
-      - "I **do not** agree with the amounts of child support the Defendant asked for in the motion.": false
+      - "I agree with the amounts of child support ${ other_parties[0].name.familiar() } asked for in the motion.": true
+      - "I **do not** agree with the amounts of child support ${ other_parties[0].name.familiar() } asked for in the motion.": false
 ---
+depends on:
+  - user_agreed_on_who_pays
+  - para_6_box_checked
 code: |
-  if not user_agreed_on_who_pays:
-    agreed_on_who_pays = False
-  if user_agreed_on_who_pays and para_6_box_checked:
-    agreed_on_who_pays = True
+  previously_agreed_on_support = user_agreed_on_who_pays and para_6_box_checked
 ---
 if: para_6_box_checked
 question: |
@@ -560,6 +563,7 @@ subquestion: |
   Then complete this sentence:
 fields:
   - "${ other_parties[0].name.familiar() } and I agreed to start or change support": agree_with_others_support_answer
+    datatype: radio
     choices:
       - "exactly as stated in the motion": agree_exactly
       - "but not as stated in the motion": agree_not_as_stated
@@ -677,15 +681,15 @@ content: |
   Child care costs are used to allow a parent to work, look for work, or go to school.
   For most children the child care obligation ends around age 12, but it may be longer if the child’s health or safety requires it.
 ---
-id: Do you agree with what is being asked for in the motion
-question: |
-  Do you agree with what is being asked for in the motion?
-fields:
-  - no label: agree_with_motion
-    datatype: radio
-    choices:
-      - "Yes, I agree with the motion": True
-      - "No, I do not agree with the motion": False
+depends on:
+  - previously_agreed_on_support
+  - agree_with_others_support_answer
+  - agree_with_para_7
+code: |
+  if previously_agreed_on_support:
+    agree_with_motion = agree_with_others_support_answer == "agree_exactly"
+  else:
+    agree_with_motion = agree_with_para_7
 ---
 id: children number
 question: |
@@ -693,14 +697,14 @@ question: |
 fields:
   - Number of children: children_number
     datatype: integer
+    min: 1
+    validation messages:
+      min: |
+        You must have at least one child that this support is for.
 ---
+id: new amounts
 question: |
-  % if agreed_on_who_pays:
-  In the agreement, how
-  % else:
-  How
-  % endif
-  much per month are you asking the court to order for these costs?
+  How much per month are you asking the court to order for these costs?
 fields:
   - Base support: base_support_new
     datatype: currency
@@ -715,17 +719,14 @@ fields:
     help: |
       Ordinary medical costs are uninsured costs for things like office visits and prescription co-pays.
 ---
+id: additional amount new
 question: |
-  % if agreed_on_who_pays:
-  In the agreement, are
-  % else:
-  Are
-  % endif
-  you asking the court to order an additional amount each month for other expenses?
+  Are you asking the court to order an additional amount each month for other expenses?
 fields:
   - no label: is_additional_amount_new
     datatype: yesnoradio
   - Who should pay these other expenses?: who_pays_new_additional
+    datatype: radio
     choices:
       - ${ users[0] } (you): user
       - ${ other_parties[0] }: other_party
@@ -767,50 +768,101 @@ code: |
   else:
     which_side_pays_new = "defendant"
 ---
+if: who_pays_new == "user"
 question: |
-  % if agreed_on_who_pays:
-  In the agreement, are
-  % else:
-  Are
-  % endif
-  you asking the court to give the payer of child support a credit each month for dependent benefits received from a government insurance program?
+  Are you asking the court to give you a monthly credit for dependent benefits received from a government insurance program?
 subquestion: |
-  For example, ${ "you" if who_pays_new == "user" else other_parties[0] } would receive a credit each month for benefits from Social Security, Veteran’s Administration, or railroad retirement.
+  For example, you would receive a credit each month for benefits from Social Security, Veteran’s Administration, or railroad retirement.
 
-  If the payer of child support receives retirement, survivor’s, or disability benefits from a government insurance program such as Social Security,
-  Veteran’s Administration, or Railroad Retirement, his or her dependent children may also get benefits based on the payer’s work record. If this is so,
-  the court will count the children’s benefits as a credit towards payment of the parent’s child support obligation. In other words, the amount of dependent
-  benefits should be subtracted from the support amount.
+  ${ collapse_template(learn_more_about_benefits_credit) }
 fields:
-  - Are you asking for the court to give ${ "you" if who_pays_new == "user" else other_parties[0] } a credit?: asking_for_payer_benefits_credit
+  - label: |
+      Are you asking for the court to give you a credit?
+    field: asking_for_payer_benefits_credit
     label above field: True
     datatype: yesnoradio
-  - What type of dependent benefit does your child or children receive?: child_benefit_type
+  - label: |
+      % if children_number == 1:
+      What type of dependent benefit does your child receive?
+      % else:
+      What type of dependent benefit do your children receive?
+      % endif
     label above field: True
+    field: child_benefit_type
     datatype: radio
     code: |
       benefit_types_ordered
     show if: asking_for_payer_benefits_credit
-  - How much is the monthly dependent benefit that the child or children get from the government insurance program based on your work record?: child_benefit_amount
+  - label: |
+      % if children_number == 1:
+      How much is the monthly dependent benefit that your child gets from the government insurance program, based on your work record?
+      % else:
+      How much is the monthly dependent benefit that your children get from the government insurance program, based on your work record?
+      % endif
     label above field: True
+    field: child_benefit_amount
     datatype: currency
     show if: asking_for_payer_benefits_credit
 ---
-id: preview response_to_support
+if: who_pays_new != "user"
 question: |
-  Preview your form before you sign it
+  Are you asking the court to give ${ other_parties[0].name.familiar() } a monthly credit for dependent benefits received from a government insurance program?
 subquestion: |
-  Here is a preview of the form you will sign on the next page.   
-  
-  ${ al_court_bundle.as_pdf(key='preview') }
+  For example, ${ other_parties[0].name.familiar() } would receive a credit each month for benefits from Social Security, Veteran’s Administration, or railroad retirement.
 
-  Click the image to open it in a new tab. Click the "Edit answers" button
-  to edit your answers.
-
-  ${ action_button_html(url_action('review_response_to_support'), label='Edit answers', color='info') }
-  
-  Remember to come back to this window to continue and sign your form.
-continue button field: response_to_support_preview_question
+  ${ collapse_template(learn_more_about_benefits_credit) }
+fields:
+  - Are you asking for the court to give ${ other_parties[0].name.familiar() } a credit?: asking_for_payer_benefits_credit
+    label above field: True
+    datatype: yesnoradio
+  - label: |
+      % if children_number == 1:
+      What type of dependent benefit does the child receive?
+      % else:
+      What type of dependent benefit do the children receive?
+      % endif
+    label above field: True
+    field: child_benefit_type
+    datatype: radio
+    code: |
+      benefit_types_ordered
+    show if: asking_for_payer_benefits_credit
+  - label: |
+      % if children_number == 1:
+      How much is the monthly dependent benefit that the child gets from the government insurance program, based on ${ other_parties[0].name.familiar() }'s work record?
+      % else:
+      How much is the monthly dependent benefit that the children get from the government insurance program, based on ${ other_parties[0].name.familiar() }'s work record?
+      % endif
+    label above field: True
+    field: child_benefit_amount
+    datatype: currency
+    show if: asking_for_payer_benefits_credit
+---
+template: learn_more_about_benefits_credit
+subject: I want to learn more about this
+content: |
+  % if who_pays_new == "user":
+  If you receive retirement, survivor’s, or disability benefits from a government insurance program such as Social Security,
+  Veteran’s Administration, or Railroad Retirement,
+  % if children_number == 1:
+  your dependent child may also get benefits based on your work record.
+  If this is so, the court will count the child’s benefits as a credit towards payment of your child support obligation.
+  % else:
+  your dependent children may also get benefits based on your work record.
+  If this is so, the court will count the children’s benefits as a credit towards payment of your child support obligation.
+  % endif
+  % else:
+  If ${ other_parties[0].name.familiar() }'s receives retirement, survivor’s, or disability benefits from a government insurance program such as Social Security,
+  Veteran’s Administration, or Railroad Retirement,
+  % if children_number == 1:
+  ${ other_parties[0].name.familiar() }'s dependent child may also get benefits based on ${ other_parties[0].name.familiar() }'s work record.
+  If this is so, the court will count the child’s benefits as a credit towards payment of ${ other_parties[0].name.familiar() }'s child support obligation.
+  % else:
+  ${ other_parties[0].name.familiar() }'s dependent children may also get benefits based on ${ other_parties[0].name.familiar() }'s work record.
+  If this is so, the court will count the children’s benefits as a credit towards payment of ${ other_parties[0].name.familiar() }'s child support obligation.
+  % endif
+  % endif
+  In other words, the amount of dependent benefits should be subtracted from the support amount.
 ---
 code: |
   signature_fields = ['users[0].signature']
@@ -900,7 +952,7 @@ subquestion: |
   
   View, download and send your form below. Click the "Edit answers" button to fix any mistakes.
 
-  ${ action_button_html(url_action('review_response_to_support'), label='Edit answers', color='info') }
+  ${ action_button_html(url_action('review_form'), label='Edit answers', color='info') }
   
   
   ${ al_user_bundle.download_list_html() }
@@ -980,11 +1032,11 @@ attachment:
           % if conditions_changed_in_motion:
           ${ response_to_support_attachment.safe_value("conditions_changed_disagree_reason") }
           % endif
-      - "agree_with_other_on_support": ${ agreed_on_who_pays }
-      - "agree_exactly_with_other": ${ agreed_on_who_pays and agree_with_others_support_answer == "agree_exactly" }
-      - "agree_not_as_stated": ${ agreed_on_who_pays and agree_with_others_support_answer == "agree_not_as_stated" }
+      - "agree_with_other_on_support": ${ previously_agreed_on_support }
+      - "agree_exactly_with_other": ${ previously_agreed_on_support and agree_with_others_support_answer == "agree_exactly" }
+      - "agree_not_as_stated": ${ previously_agreed_on_support and agree_with_others_support_answer == "agree_not_as_stated" }
       - "not_as_stated_reason": |
-          % if agreed_on_who_pays and agree_with_others_support_answer == "agree_not_as_stated":
+          % if previously_agreed_on_support and agree_with_others_support_answer == "agree_not_as_stated":
           See addendum.
           % endif
       - "agree_with_motion": ${ agree_with_motion }
@@ -1000,7 +1052,7 @@ attachment:
 code: |
   response_to_support_attachment.overflow_fields["conditions_changed_disagree_reason"].overflow_trigger = 340
   response_to_support_attachment.overflow_fields["conditions_changed_disagree_reason"].label = "5. I do not agree that conditions regarding support have changed as stated in the motion"
-  response_to_support_attachment.overflow_fields["not_as_stated_reason"].overflow_trigger = agreed_on_who_pays and agree_with_others_support_answer == "agree_not_as_stated"
+  response_to_support_attachment.overflow_fields["not_as_stated_reason"].overflow_trigger = previously_agreed_on_support and agree_with_others_support_answer == "agree_not_as_stated"
   response_to_support_attachment.overflow_fields["not_as_stated_reason"].label = "6. I agreed with the other party to start/change support, but not as stated in the motion"
   response_to_support_attachment.overflow_fields["support_should_be_paid_as_follows"].overflow_trigger = not agree_with_motion
   response_to_support_attachment.overflow_fields.gathered = True
