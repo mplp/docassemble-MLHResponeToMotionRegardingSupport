@@ -32,13 +32,14 @@ code: |-
 ---
 id: review screen
 event: review_form
-question: |-
+question: |
   Review your answers
 review:
   - note: |
       ---
 
       <h2 class="h3">Pending Motion</h2>
+    show if: docket_number
   - Edit: docket_number
     button: |
       **What is your case number?**
@@ -56,7 +57,8 @@ review:
   - note: |
       ---
       
-      <h2 class="h3">Your Information / The Other Parent</h2>
+      <h2 class="h3">Party Information</h2>
+    show if: users
   - Edit: |-
       user_ask_role
     button: |
@@ -65,7 +67,7 @@ review:
       ${ word(showifdef('user_ask_role')).capitalize() }
   - Edit: users.revisit
     button: |
-      **Your side**
+      **You**
 
       % for item in users:
       - ${ item }
@@ -81,6 +83,7 @@ review:
       ---
       
       <h2 class="h3">The Current Order</h2>
+    show if: defined('has_existing_support_order')
   - Edit:
       - has_existing_support_order
       - recompute:
@@ -99,7 +102,7 @@ review:
     button: |
       **Who was ordered to pay support in the current support order?**
 
-      % if who_paid == "users":
+      % if who_paid == "user":
       ${ users }
       % else:
       ${ other_parties }
@@ -116,16 +119,18 @@ review:
       How often does ${ other_parties[0].name.familiar() } pay that support?:
       % endif
       Each ${ showifdef('support_time_period') }
-  - Edit: |-
-      paid_child_care
+  - Edit:
+    - paid_child_care
+    - recompute:
+      - set_all_existing_support
     button: |
-      **What are the child care costs?**
-
+      <strong>
       % if who_paid == "user":
       Were you ordered to pay child care costs?:
       % else:
       Was ${ other_parties[0].name.familiar() } ordered to pay child care costs?:
       % endif
+      </strong>
       ${ word(yesno(paid_child_care)) }
 
       % if showifdef('paid_child_care'):
@@ -136,28 +141,30 @@ review:
       % endif
       ${ currency(showifdef('child_care_amount')) }
       % endif
-  - Edit: |-
-      child_care_time_period
+  - Edit: child_care_time_period
     button: |
       <strong>
       % if who_paid == "user":
       How often do you pay child care?
       % else:
-      How often does ${ defendants[0].name.familiar() } pay child care?
+      How often does ${ other_parties[0].name.familiar() } pay child care?
       % endif
       </strong>
 
       Each ${ showifdef('child_care_time_period') }
-  - Edit: |-
-      paid_medical_costs
+    show if: paid_child_care
+  - Edit:
+    - paid_medical_costs
+    - recompute:
+      - set_all_existing_support
     button: |
-      **Who was ordered to pay ordinary medical costs?**
-
+      <strong>
       % if who_paid == "user":
       Were you ordered to pay ordinary medical care costs?:
       % else:
       Was ${ other_parties[0].name.familiar() } ordered to pay ordinary medical care costs?:
       % endif
+      </strong>
       ${ word(yesno(paid_medical_costs)) }
 
       % if showifdef('paid_medical_costs'):
@@ -174,18 +181,18 @@ review:
       % if who_paid == "user":
       How often do you pay that ordinary medical care?
       % else:
-      How often does ${ defendants[0].name.familiar() } pay that ordinary medical care?
+      How often does ${ other_parties[0].name.familiar() } pay that ordinary medical care?
       % endif
       </strong>
 
       Each ${ showifdef('medical_care_time_period') }
+    show if: paid_medical_costs
   - Edit: conditions_changed_in_motion
     button: |
       **Have the conditions regarding supported changed?**
 
       ${ word(yesno(conditions_changed_in_motion)) }
-  - Edit: |-
-      agree_conditions_changed
+  - Edit: agree_conditions_changed
     button: |
       **Do you agree with what ${ other_parties[0].name.familiar() }'s *Motion Regarding Support* says about the change in circumstances?**: 
      
@@ -193,10 +200,12 @@ review:
       % if not showifdef('agree_conditions_changed'):
       ${ conditions_changed_disagree_reason }
       % endif
+    show if: conditions_changed_in_motion
   - note: |
       ---
 
-      <h2 class="h3">Agreement Information</h2>
+      <h2 class="h3">Who Pays and How Much</h2>
+    show if: user_agreed_on_who_pays
   - Edit:
     - user_agreed_on_who_pays
     - recompute:
@@ -243,42 +252,13 @@ review:
       ---
 
       <h2 class="h3">Changes Requested</h2>
+    show if: children_number
   - Edit: |-
       children_number
     button: |
       **How many children is this support for?**
 
       ${ showifdef('children_number') }
-    show if: not agree_with_motion
-  - Edit: |-
-      base_support_new
-    button: |
-      **How much per month are you asking the court to order for these costs?**
-
-      Base support: ${ currency(showifdef('base_support_new')) }
-
-      Child care costs: ${ currency(showifdef('child_care_new')) }
-
-      Ordinary medical costs: ${ currency(showifdef('ordinary_medical_new')) }
-    show if: not agree_with_motion
-  - Edit: |-
-      is_additional_amount_new
-    button: |
-      **Are you asking the court to order an additional amount each month for other expenses?**
-
-      ${ word(yesno(is_additional_amount_new)) }
-
-      % if showifdef('is_additional_amount_new'):
-      Who should pay these other expenses?: ${ showifdef('who_pays_new_additional') }
-      % endif
-
-      % if showifdef('is_additional_amount_new'):
-      'The reason for the other expenses is as follows:': ${ showifdef('additional_amount_reason') }
-      % endif
-
-      % if showifdef('is_additional_amount_new'):
-      How much per month are you asking the court to order for the other expenses?: ${ currency(showifdef('additional_amount_new')) }
-      % endif
     show if: not agree_with_motion
   - Edit: who_pays_new
     button: |
@@ -288,6 +268,34 @@ review:
       Yourself
       % else:
       ${ other_parties[0] }
+      % endif
+    show if: not agree_with_motion
+  - Edit: base_support_new
+    button: |
+      **How much per month are you asking the court to order for these costs?**
+
+      Base support: ${ currency(showifdef('base_support_new')) }
+
+      Child care costs: ${ currency(showifdef('child_care_new')) }
+
+      Ordinary medical costs: ${ currency(showifdef('ordinary_medical_new')) }
+    show if: not agree_with_motion
+  - Edit: is_additional_amount_new
+    button: |
+      **Are you asking the court to order an additional amount each month for other expenses?**
+
+      ${ word(yesno(is_additional_amount_new)) }
+
+      % if showifdef('is_additional_amount_new'):
+      Who should pay these other expenses?: ${ "you" if showifdef('who_pays_new_additional') == "user" else other_parties[0] }
+      % endif
+
+      % if showifdef('is_additional_amount_new'):
+      The reason for the other expenses is as follows: ${ showifdef('additional_amount_reason') }
+      % endif
+
+      % if showifdef('is_additional_amount_new'):
+      How much per month are you asking the court to order for the other expenses?: ${ currency(showifdef('additional_amount_new')) }
       % endif
     show if: not agree_with_motion
   - Edit: asking_for_payer_benefits_credit
@@ -309,8 +317,7 @@ review:
       How much is the monthly dependent benefit that the child or children get from the government insurance program based on your work record?: ${ currency(showifdef('child_benefit_amount')) }
       % endif
     show if: not agree_with_motion
-  - Edit: |-
-      esign
+  - Edit: esign
     button: |
       **Electronic Signature**
 

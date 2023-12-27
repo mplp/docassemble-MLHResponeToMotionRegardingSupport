@@ -157,6 +157,7 @@ code: |
     nav.set_section("review_changes")
     set_progress(87.5)
     changes_requested_signpost
+    formula_signpost
     children_number
     who_pays_new
     base_support_new
@@ -230,6 +231,27 @@ subquestion: |
   Otherwise, click Continue.
 continue button field: behind_on_payments_fiy
 ---
+id: MLH intro navigation w/ sections
+question: "Navigation"
+subquestion: |
+  If you make a mistake at any time, you can use the **< ${ MLH_back_button_label }** button below to go back.
+  % if device().is_mobile:
+  You can also see and edit your earlier answers by clicking the current section in the dropdown in the top right. It says **Introduction** now.
+  % else:
+  You can also see and edit your earlier answers by clicking the current section button to the left. It says **Introduction** now.
+  % endif
+  Review your answers" button.
+
+  Tap the {green words} in any screen for a definition or more information.
+
+  You can also click an underlined link with a blue triangle next to it to see more information.
+
+  ${ collapse_template(collapsible_info_template) }
+terms:
+  green words: |
+    Green words are legal terms or a short way of referring to something that needs more explanation. The definition or explanation pops up when you tap the green words.
+continue button field: MLH_intro_navigation
+---
 id: has_existing_case
 question: |
   Did you receive a *Motion Regarding Support* in an existing Michigan family court case?
@@ -243,7 +265,7 @@ fields:
 id: existing_motion_kickout
 event: existing_motion_kickout
 question: |
-  You cannot use this tool if you haven't received a Motion Regarding Support
+  You cannot use this tool unless you have received a Motion Regarding Support
 subquestion: |
   You said you did not receive a Motion Regarding Support in an existing Michigan divorce, separate maintenance, paternity, custody, or family support case.
   You must have received one to continue to use this tool.
@@ -313,7 +335,7 @@ question: |
   The information you put on your form is a public record
 subquestion: |
   All of the information you supply, including your address and telephone information,
-  will be included on forms that you file with the court and deliver to the Defendant.
+  will be included on forms that you file with the court and deliver to the ${ "defendant" if user_started_case else "plaintiff"}.
 
   Keep in mind that your case file is a public record and anyone could ask to look at it and see your address and phone number.
 
@@ -378,8 +400,9 @@ content: |
 
   ${ image_support_amount.show(width="100%") }
 ---
+id: subtotal amount on current Uniform CSO
 question: |
-  What is the subtotal amount on your current Uniform Child Support Order?
+  What is the subtotal amount on the current Uniform Child Support Order?
 subquestion: |
   ${ collapse_template(where_subtotal_amount) }
 fields:
@@ -398,7 +421,13 @@ fields:
       - Weekly: week
       - Monthly: month
       - Other: other
-  - "What is the time period?": support_time_period
+  - label: |
+      % if who_paid == "user":
+      You pay each:
+      % else:
+      ${ other_parties[0].name.familiar() } pays each:
+      % endif
+    field: support_time_period
     show if:
       variable: support_time_period
       is: other
@@ -442,12 +471,18 @@ fields:
       - Weekly: week
       - Monthly: month
       - Other: other
-  - "What is the time period?": child_care_time_period
+  - label: |
+      % if who_paid == "user":
+      You pay each:
+      % else:
+      ${ other_parties[0].name.familiar() } pays each:
+      % endif
+    field: child_care_time_period
     show if:
       variable: child_care_time_period
       is: other
 ---
-id: Whate are the ordinary medical costs
+id: What are the ordinary medical costs
 question: |
   What are the ordinary medical costs?
 subquestion: |
@@ -480,7 +515,7 @@ question: |
   % if who_paid == "user":
   How often do you pay that ordinary medical care?
   % else:
-  How often does ${ defendants[0].name.familiar() } pay that ordinary medical care?
+  How often does ${ other_parties[0].name.familiar() } pay that ordinary medical care?
   % endif
 fields:
   - no label: medical_care_time_period
@@ -489,7 +524,13 @@ fields:
       - Weekly: week
       - Monthly: month
       - Other: other
-  - "What is the time period?": medical_care_time_period
+  - label: |
+      % if who_paid == "user":
+      You pay each:
+      % else:
+      ${ other_parties[0].name.familiar() } pays each:
+      % endif
+    field: medical_care_time_period
     show if:
       variable: medical_care_time_period
       is: other
@@ -498,7 +539,7 @@ id: Do you agree with what other party Motion Regarding Support says about the c
 question: |
   Have the conditions regarding supported changed?
 subquestion: |
-  Look at paragraph 5 (section G) of the defendant's *Motion Regarding Support*. Is the box in front of "Conditions regarding support have changed as follows:" checked?
+  Look at paragraph 5 (section G) of the ${ user_ask_role }'s *Motion Regarding Support*. Is the box in front of "Conditions regarding support have changed as follows:" checked?
 fields:
   - "Is the box checked": conditions_changed_in_motion
     datatype: yesnoradio
@@ -573,8 +614,9 @@ fields:
       variable: agree_with_others_support_answer
       is: agree_not_as_stated
 ---
+id: changes requested signpost
 question: |
-  How do you want to court to order child support to be paid?
+  Telling the court to order child support
 subquestion: |
   You will now be asked questions about how you want the court to order child support to be paid.
 
@@ -591,6 +633,15 @@ subquestion: |
 
   You can use the [MiChildSupport Calculator](https://micase.state.mi.us/calculatorapp/public/welcome/load.html) on the Michigan Department of Health and Human Services website to find out what the support amount might be in your case.
 continue button field: changes_requested_signpost
+---
+id: how much child support signpost
+question: |
+  Telling the court how much child support to order
+subquestion: |
+  Child support normally includes a base amount, plus a percentage of medical costs and child care costs.
+
+  The court must order support according to the Michigan Child Support Formula unless the result would be unfair. If the parents reach an agreement about the child support amount, the court can consider the agreement, but it does not have to order it.
+continue button field: formula_signpost
 ---
 id: is_parent
 question: |
@@ -624,7 +675,7 @@ question: |
 subquestion: |
   You are called the “moving party” because you are filing this Response to Motion Regarding Support.  
 
-  In your existing divorce, separate maintenance, paternity, custody, or family support case, you are either the Plaintiff or the Defendant.
+  In your existing family court case, you are either the Plaintiff or the Defendant.
 
   What party are you in your case?
 
@@ -1003,13 +1054,19 @@ attachment:
       - "plaintiff_is_moving_party": ${ user_started_case }
       # Is actually 'part', not party
       - "defendant_is_moving_part": ${ not user_started_case }
-      - "plaintiffs": ${ plaintiffs }
-      - "defendants": ${ defendants }
+      - "plaintiffs": |
+          ${ plaintiffs }  
+          ${ plaintiffs[0].address.on_one_line() }  
+          ${ word("Does not have phone") if plaintiffs[0].no_phone_number else plaintiffs[0].phone_numbers() }
+      - "defendants": |
+          ${ defendants }  
+          ${ defendants[0].address.on_one_line() }  
+          ${ word("Does not have phone") if defendants[0].no_phone_number else defendants[0].phone_numbers() }
+      - "third_parties": ""
       - "third_party_is_moving_party": False
-      - "judgement_entered_date": ${ recent_judgment_date.format() }
+      - "judgement_entered_date": ${ recent_judgment_date.format() if has_existing_support_order else "" }
       - "judgment_entered": ${ has_existing_support_order }
       - "no_support_order": ${ not has_existing_support_order }
-      - "third_parties": ""
       - "paid_support_costs": ${ has_existing_support_order }
       - "plaintiff_pays_support": ${ has_existing_support_order and which_side_paid == "plaintiff" }
       - "defendant_pays_support": ${ has_existing_support_order and which_side_paid == "defendant" }
@@ -1018,18 +1075,18 @@ attachment:
       - "paid_child_care": ${ has_existing_support_order and paid_child_care }
       - "plaintiff_pays_care": ${ has_existing_support_order and paid_child_care and which_side_paid == "plaintiff" }
       - "defendant_pays_care": ${ has_existing_support_order and paid_child_care and which_side_paid == "defendant" }
-      - "child_care_amount": ${ thousands(child_care_amount, show_decimals=True) if has_existing_support_order else "" }
-      - "child_care_time_period": ${ child_care_time_period if has_existing_support_order else "" }
+      - "child_care_amount": ${ thousands(child_care_amount, show_decimals=True) if has_existing_support_order and paid_child_care else "" }
+      - "child_care_time_period": ${ child_care_time_period if has_existing_support_order and paid_child_care else "" }
       - "paid_medical_costs": ${ has_existing_support_order and paid_medical_costs }
       - "plaintiff_pays_medical": ${ has_existing_support_order and paid_medical_costs and which_side_paid == "plaintiff" }
       - "defendant_pays_medical": ${ has_existing_support_order and paid_medical_costs and which_side_paid == "defendant" }
-      - "medical_care_amount": ${ thousands(medical_care_amount, show_decimals=True) if has_existing_support_order else "" }
-      - "medical_care_time_period": ${ medical_care_time_period if has_existing_support_order else "" }
+      - "medical_care_amount": ${ thousands(medical_care_amount, show_decimals=True) if has_existing_support_order and paid_medical_costs else "" }
+      - "medical_care_time_period": ${ medical_care_time_period if has_existing_support_order and paid_medical_costs else "" }
       - "conditions_changed_in_motion": ${ conditions_changed_in_motion }
       - "agree_conditions_changed": ${ conditions_changed_in_motion and agree_conditions_changed }
       - "disagree_conditions_changed": ${ conditions_changed_in_motion and not agree_conditions_changed }
       - "conditions_changed_disagree_reason": |
-          % if conditions_changed_in_motion:
+          % if conditions_changed_in_motion and not agree_conditions_changed:
           ${ response_to_support_attachment.safe_value("conditions_changed_disagree_reason") }
           % endif
       - "agree_with_other_on_support": ${ previously_agreed_on_support }
@@ -1049,6 +1106,10 @@ attachment:
       - "signature_date": ${ signature_date if esign else "" }
       - "service_signature_date": ${ service_signature_date }
 ---
+depends on:
+  - previously_agreed_on_support
+  - agree_with_others_support_answer
+  - agreed_with_motion
 code: |
   response_to_support_attachment.overflow_fields["conditions_changed_disagree_reason"].overflow_trigger = 340
   response_to_support_attachment.overflow_fields["conditions_changed_disagree_reason"].label = "5. I do not agree that conditions regarding support have changed as stated in the motion"
