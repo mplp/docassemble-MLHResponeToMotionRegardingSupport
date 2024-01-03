@@ -41,7 +41,7 @@ def find_package_data(where='.', package='', exclude=standard_exclude, exclude_d
                 out.setdefault(package, []).append(prefix+name)
     return out
 setup(name='docassemble.MLHResponseToMotionRegardingSupport',
-      version='0.0.1',
+      version='0.0.2',
       description=('Response to Motion Regarding Child Support'),
       long_description='# docassemble.MLHResponseToMotionRegardingSupport\n\nResponse to Motion Regarding Child Support\n\n## Author\n\nBryce Willey\n\n',
       long_description_content_type='text/markdown',
