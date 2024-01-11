@@ -271,9 +271,6 @@ subquestion: |
   You must have received one to continue to use this tool.
   
   If you made a mistake, click the **Undo** button. Otherwise, you can return to [Michigan Legal Help](https://michiganlegalhelp.org) for other legal information or resources.
-buttons:
-  - Exit: exit
-    url: https://michiganlegalhelp.org
 ---
 id: what_you_will_need
 question: |
@@ -665,9 +662,6 @@ subquestion: |
   This tool may only be used to prepare a response in a case between two parents, with no third-party involvement.
 
   If you made a mistake, click the **Undo** button. Otherwise, you can return to [Michigan Legal Help](https://michiganlegalhelp.org) for other legal information or resources.
-buttons:
-  - Exit: exit
-    url: https://michiganlegalhelp.org
 ---
 id: what is the user's role?
 question: |
