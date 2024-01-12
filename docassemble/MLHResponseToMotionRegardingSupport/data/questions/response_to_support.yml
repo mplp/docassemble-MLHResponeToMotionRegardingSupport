@@ -52,26 +52,26 @@ objects:
   - image_court_papers: |
       DAStaticFile.using(
         filename="court_papers.jpg",
-        alt=word("""
+        alt_text=word("""
           A court form. The court information is circled in the top right; State of Michigan, Judicial District, Judicial Circuit, and County Probate.
           The case number is circled in the top left: 01-234 DM. Below those is the party information, including the plaintiffs' and defendants' names, and address
-        """))
+        """.strip()))
   - image_uniform_order_date: |
       DAStaticFile.using(
         filename="date_of_order.jpg",
-        alt=word("The third page of the uniform child support order. The date is at the bottom, to the left of the judge's name"))
+        alt_text=word("The third page of the uniform child support order. The date is at the bottom, to the left of the judge's name"))
   - image_plaintiff_or_defendant: |
       DAStaticFile.using(
         filename="plaintiff_or_defendant.jpg",
-        alt=word("The plaintiff and defendant's names are circled, partially down the first page. The Plaintiff is on the left, and the defendant is on the right."))
+        alt_text=word("The plaintiff and defendant's names are circled, partially down the first page. The Plaintiff is on the left, and the defendant is on the right."))
   - image_support_amount: |
       DAStaticFile.using(
         filename="support_amount.jpg",
-        alt=word("The first page of the uniform child support order. The amounts are at the bottom, in item number 3."))
+        alt_text=word("The first page of the uniform child support order. The amounts are at the bottom, in item number 3."))
   - image_subtotal_amount: |
       DAStaticFile.using(
         filename="subtotal_amount.png",
-        alt=word("In the support table in the uniform child support order. The subtotal is the 4th row, and the value is the furthest right column with a value."))
+        alt_text=word("In the support table in the uniform child support order. The subtotal is the 4th row, and the value is the furthest right column with a value."))
 ---
 objects:
   - other_parties: ALPeopleList.using(ask_number=True, target_number=1, complete_attribute="complete")
