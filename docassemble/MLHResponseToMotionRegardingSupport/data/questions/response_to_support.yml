@@ -7,7 +7,7 @@ metadata:
   title: >-
     Response to Motion Regarding Child Support
   short title: >-
-    Response to Child Support
+    Response to Child Support Motion
   description: |-
     This interview helps someone in Michigan respond to a "Motion Regarding Child Support".
   tags:
@@ -43,6 +43,20 @@ code: |
 code: |
   MLH_time_min = 20
   MLH_time_max = 60
+  MLH_materials_included = True
+  MLH_form_type = "forms"
+---
+template: MLH_materials              
+content: |
+  * the case number,
+  * court information, and
+  * information about the parties from your existing case
+
+  ${ collapse_template(where_info_on_papers_template) }
+---
+template: MLH_welcome_message     
+content: |
+  Welcome to the ${ MLH_interview_short_title } tool. If you received a *Motion Regarding Support* from your child’s other parent, you can respond in writing to the other parent and the court before the hearing.
 ---
 code: |
   al_form_type = "existing_case" 
@@ -60,10 +74,6 @@ objects:
       DAStaticFile.using(
         filename="date_of_order.jpg",
         alt_text=word("The third page of the uniform child support order. The date is at the bottom, to the left of the judge's name"))
-  - image_plaintiff_or_defendant: |
-      DAStaticFile.using(
-        filename="plaintiff_or_defendant.jpg",
-        alt_text=word("The plaintiff and defendant's names are circled, partially down the first page. The Plaintiff is on the left, and the defendant is on the right."))
   - image_support_amount: |
       DAStaticFile.using(
         filename="support_amount.jpg",
@@ -114,17 +124,20 @@ code: |
   # Set the allowed courts for this interview
   allowed_courts = []
   nav.set_section("review_intro")
+  MLH_intro_landing
+  response_to_support_intro
+  behind_on_payments_fiy
+  MLH_standard_intro_pages
   set_progress(12.5)
-  # Below sets the user_role and user_ask_role by asking a question.
-  # You can set user_ask_role directly instead to either 'plaintiff' or 'defendant'
-  what_you_will_need
 
   nav.set_section("review_pending_motion")
   set_progress(25)
   if not has_existing_motion:
     existing_motion_kickout
+  if not is_parent or third_party_named:
+    parent_third_party_kickout
+    
   docket_number
-
   county_choice
   court_index
   the_court
@@ -132,8 +145,6 @@ code: |
   if has_existing_support_order:
     recent_judgment_date
 
-  if not is_parent or third_party_named:
-    parent_third_party_kickout
   user_started_case
   public_record_fyi
 
@@ -194,11 +205,6 @@ comment: |
   Delete mandatory: True to include in another interview
 mandatory: True
 code: |
-  # al_intro_screen
-  MLH_intro_landing = True
-  response_to_support_intro
-  behind_on_payments_fiy
-  MLH_standard_intro_pages
   interview_order_response_to_support
   # Store anonymous data for analytics / statistics
   store_variables_snapshot(
@@ -212,13 +218,14 @@ code: |
 ---
 id: Response_to_Motion_Regarding_Child_Support
 question: |
-  Welcome to Michigan Legal Help's Do-It-Yourself Response Motion To Change or Get Child Support tool.
+  Important Deadlines
 subquestion: |
-  If you received a Motion Regarding Support from your child’s other parent, you can respond in writing to the other parent and the court before you go to the hearing.
-  Answer the following questions to complete a Response to Motion Regarding Child Support in Michigan.
-
-  You must file your response at least 3 days before the hearing.
-  You must mail the other parent a copy of your response at least 5 days before the hearing or have a copy personally delivered to them at least 3 days before the hearing.
+  You must **file** your response at least **3 days before the hearing**.
+  
+  You must also either:
+  
+  * **mail** the other parent a copy of your response at least **5 days** before the hearing, or 
+  * have a copy **personally delivered** to the other parent at least **3 days** before the hearing.
 continue button field: response_to_support_intro
 ---
 question: 
@@ -230,27 +237,6 @@ subquestion: |
   If you are in this situation, use the [Guide to Legal Help](https://michiganlegalhelp.org/guide-to-legal-help) to look for a lawyer in your area.
   Otherwise, click Continue.
 continue button field: behind_on_payments_fiy
----
-id: MLH intro navigation w/ sections
-question: "Navigation"
-subquestion: |
-  If you make a mistake at any time, you can use the **< ${ MLH_back_button_label }** button below to go back.
-  % if device().is_mobile:
-  You can also see and edit your earlier answers by clicking the current section in the dropdown in the top right. It says **Introduction** now.
-  % else:
-  You can also see and edit your earlier answers by clicking the current section button to the left. It says **Introduction** now.
-  % endif
-  Review your answers" button.
-
-  Tap the {green words} in any screen for a definition or more information.
-
-  You can also click an underlined link with a blue triangle next to it to see more information.
-
-  ${ collapse_template(collapsible_info_template) }
-terms:
-  green words: |
-    Green words are legal terms or a short way of referring to something that needs more explanation. The definition or explanation pops up when you tap the green words.
-continue button field: MLH_intro_navigation
 ---
 id: has_existing_case
 question: |
@@ -265,25 +251,11 @@ fields:
 id: existing_motion_kickout
 event: existing_motion_kickout
 question: |
-  You cannot use this tool unless you have received a Motion Regarding Support
+  You cannot use this tool unless you have received a *Motion Regarding Support*
 subquestion: |
-  You said you did not receive a Motion Regarding Support in an existing Michigan divorce, separate maintenance, paternity, custody, or family support case.
-  You must have received one to continue to use this tool.
+  Sorry, you can only use this tool if you received a *Motion Regarding Support* in an existing Michigan family case.
   
   If you made a mistake, click the **Undo** button. Otherwise, you can return to [Michigan Legal Help](https://michiganlegalhelp.org) for other legal information or resources.
----
-id: what_you_will_need
-question: |
-  What you will need to complete this form
-subquestion: |
-  To complete this form, you will need:
-
-  * the case number,
-  * court information, and
-  * information about the parties from your existing case
-
-  ${ collapse_template(where_info_on_papers_template) }
-continue button field: what_you_will_need
 ---
 template: where_info_on_papers_template
 subject: |

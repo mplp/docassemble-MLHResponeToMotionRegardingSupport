@@ -3,8 +3,10 @@ import sys
 from setuptools import setup, find_packages
 from fnmatch import fnmatchcase
 from distutils.util import convert_path
+
 standard_exclude = ('*.pyc', '*~', '.*', '*.bak', '*.swp*')
 standard_exclude_directories = ('.*', 'CVS', '_darcs', './build', './dist', 'EGG-INFO', '*.egg-info')
+
 def find_package_data(where='.', package='', exclude=standard_exclude, exclude_directories=standard_exclude_directories):
     out = {}
     stack = [(convert_path(where), '', package)]
@@ -40,18 +42,20 @@ def find_package_data(where='.', package='', exclude=standard_exclude, exclude_d
                     continue
                 out.setdefault(package, []).append(prefix+name)
     return out
+
 setup(name='docassemble.MLHResponseToMotionRegardingSupport',
       version='0.0.2',
       description=('Response to Motion Regarding Child Support'),
-      long_description='# docassemble.MLHResponseToMotionRegardingSupport\n\nResponse to Motion Regarding Child Support\n\n## Author\n\nBryce Willey\n\n',
+      long_description='# docassemble.MLHResponseToMotionRegardingSupport\r\n\r\nResponse to Motion Regarding Child Support\r\n\r\n## Author\r\n\r\nBryce Willey\r\n\r\n',
       long_description_content_type='text/markdown',
       author='Bryce Willey',
-      author_email='',
+      author_email='ekressmiller@lsscm.org',
       license='The MIT License',
       url='https://courtformsonline.org',
       packages=find_packages(),
       namespace_packages=['docassemble'],
-      install_requires=['docassemble.AssemblyLine', 'docassemble.mlhframework'],
+      install_requires=['docassemble.AssemblyLine>=2.28.1', 'docassemble.mlhframework'],
       zip_safe=False,
       package_data=find_package_data(where='docassemble/MLHResponseToMotionRegardingSupport/', package='docassemble.MLHResponseToMotionRegardingSupport'),
      )
+
