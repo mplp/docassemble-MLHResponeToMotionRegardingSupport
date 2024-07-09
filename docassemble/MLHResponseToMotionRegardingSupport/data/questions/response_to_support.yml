@@ -179,9 +179,10 @@ code: |
 
   nav.set_section("review_conclusion")
   set_progress(95)
-  efile_notice
-  if esign:
+  MLH_outro_filing_information
+  if MLH_esign:
     signature_date
+  MLH_outro_saving_answers
 
   set_progress(100)
   interview_order_response_to_support = True
@@ -294,6 +295,7 @@ fields:
       - "No, there is not a child support order in my case": False
   - "Date of the most recent order or judgment": recent_judgment_date
     datatype: date
+    label above field: True
     max: ${ today() }
     show if: has_existing_support_order
   - note: |
@@ -508,7 +510,7 @@ id: Do you agree with what other party Motion Regarding Support says about the c
 question: |
   Have the conditions regarding supported changed?
 subquestion: |
-  Look at paragraph 5 (section G) of the ${ user_ask_role }'s *Motion Regarding Support*. Is the box in front of "Conditions regarding support have changed as follows:" checked?
+  Look at paragraph 5 (section G) of the ${ user_ask_role }'s *Motion Regarding Support*.
 fields:
   - "Is the box checked": conditions_changed_in_motion
     datatype: yesnoradio
@@ -526,6 +528,7 @@ subquestion: |
 fields:
   - "Do you agree with what ${ other_parties[0].name.familiar() }'s *Motion Regarding Support* says about the change in circumstances?": agree_conditions_changed
     datatype: yesnoradio
+    label above field: True
   - "Explain in detail what you do not agree with and why. Include all necessary facts.": conditions_changed_disagree_reason
     label above field: True
     input type: area
@@ -768,13 +771,13 @@ objects:
 ---
 id: who pays new
 question: |
-  Who are you asking the court to pay support?
+  Who do you want the court to order to pay support?
 fields:
   - no label: who_pays_new
     datatype: radio
     choices:
-      - ${ users[0] } (you): user
-      - ${ other_parties[0] }: other_party
+      - ${ users[0] } (you) should pay support: user
+      - ${ other_parties[0] } should pay support: other_party
 ---
 depends on:
   - who_pays_new
@@ -915,48 +918,6 @@ fields:
   - code: |
       other_parties[i].name_fields(person_or_business='person')
 ---
-# TODO(brycew): copied from LHI, adjust text to what's actually in our form
-id: efile note question
-question: |
-  Completing this process does not file your forms with the court
-subquestion: |
-  You need to file them at court in person, by mail, e-mail, or by e-filing.
-  If you are e-filing, you must use [MiFILE](https://mifile.courts.michigan.gov/).
-  Read the instructions that you will get with your forms for more information.
-
-  ${ collapse_template(am_i_going_to_efile) }
-
-  This tool will create separate forms so you can more easily e-file using MiFILE, if you plan to e-file.
-  This means that you may need to download multiple files to get all of the forms you will need.
-
-  You will be able to get all forms you need by clicking the Download Your Form(s) button on the page at the end of this tool.
-  You will then see a list of documents to download. Make sure you download each of them.
-continue button field: efile_notice
----
-template: am_i_going_to_efile
-subject: |
-  How do I know if I am going to e-file?
-content: |
-  Not all courts offer e-filing at this time. To find out if your court has e-filing, read the
-  [What is E-Filing?](https://michiganlegalhelp.org/resources/mifile/what-e-filing) article.
-  The article tells you how to find out which courts have e-filing and what kinds of cases those courts are accepting by e-filing.
-
-  Look for the two-letter case type code at the end of your case number.
-  (This could be DM, DC, DS, DP, or a different code.)
----
-id: Electronic signature question
-question: |
-  Electronic Signature
-subquestion: |
-  This tool can put "*/s/ ${ users[0] }*" where you would sign your name so you do not have to sign the form by hand. The court will accept this as your signature.
-
-  If you plan to e-file, you may want to add your electronic signature, otherwise you will need to print your forms, sign them by hand, and then scan them.
-
-  ${ collapse_template(efiling_info_template) }
-fields:
-  - Would you like to add your electronic signature to your form?: esign
-    datatype: yesnoradio
----
 include:
   - review.yml
 ---
@@ -1008,6 +969,7 @@ attachment:
   variable name: response_to_support_attachment[i]
   skip undefined: False
   pdf template file: foc51.pdf
+  editable: False
   fields:
       - "trial_court_circuit": ${ the_court.number if the_court.type == 'circuit' else '' }
       # Actually the county
@@ -1015,9 +977,9 @@ attachment:
       - "docket_number": ${ docket_number }
       - "trial_court_address_on_one_line": ${ the_court.address.on_one_line() }
       - "trial_court_phone_number": ${ the_court.phone }
-      - "plaintiff_is_moving_party": ${ user_started_case }
+      - "plaintiff_is_moving_party": ${ not user_started_case }
       # Is actually 'part', not party
-      - "defendant_is_moving_part": ${ not user_started_case }
+      - "defendant_is_moving_part": ${ user_started_case }
       - "plaintiffs": |
           ${ plaintiffs }  
           ${ plaintiffs[0].address.on_one_line() }  
@@ -1066,8 +1028,8 @@ attachment:
           % if not agree_with_motion:
           See addendum.
           % endif
-      - "users1_signature": ${ f"/s/ {users[0]}" if esign else "" }
-      - "signature_date": ${ signature_date if esign else "" }
+      - "users1_signature": ${ f"/s/ {users[0]}" if MLH_esign else "" }
+      - "signature_date": ${ signature_date if MLH_esign else "" }
       - "service_signature_date": ${ service_signature_date }
 ---
 depends on:
