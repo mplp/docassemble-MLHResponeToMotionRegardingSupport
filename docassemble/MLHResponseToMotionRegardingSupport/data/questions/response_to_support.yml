@@ -101,14 +101,15 @@ code: |
   other_parties.there_is_another = False
 # TODO(brycew): all of the sections
 sections:
-  - review_intro: "Introduction"
-  - review_pending_motion: "Pending Motion"
-  - review_your_info: "Your Information"
-  - review_other_parent: "The Other Parent"
-  - review_current_order: "The Current Order"
-  - review_who_pays: "Who Pays and How Much"
-  - review_changes: "Changes Requested"
-  - review_conclusion: Done
+  - signpost_intro: "Introduction"
+  - signpost_pending_motion: "The Other Parent's Motion"
+  - signpost_your_info: "Your Information"
+  - signpost_other_parent: "The Other Parent"
+  - signpost_current_order: "Current Support Order"
+  - signpost_who_pays: "The Child Support Motion"
+  - signpost_changes: "Changes Requested"
+  - signpost_download: "Get Your Forms"
+  - review_full: "✎ <u>Review / Edit</u>"
 ---
 #################### Interview order #####################
 comment: |
@@ -117,14 +118,15 @@ id: interview_order_response_to_support
 code: |
   # Set the allowed courts for this interview
   allowed_courts = []
-  nav.set_section("review_intro")
+  nav.set_section('review_full')
+  nav.set_section("signpost_intro")
   MLH_intro_landing
   response_to_support_intro
   behind_on_payments_fiy
   MLH_standard_intro_pages
   set_progress(12.5)
 
-  nav.set_section("review_pending_motion")
+  nav.set_section("signpost_pending_motion")
   set_progress(25)
   if not has_existing_motion:
     existing_motion_kickout
@@ -142,24 +144,24 @@ code: |
   user_started_case
   public_record_fyi
 
-  nav.set_section("review_your_info")
+  nav.set_section("signpost_your_info")
   set_progress(37.5)
   users.gather()
-  nav.set_section("review_other_parent")
+  nav.set_section("signpost_other_parent")
   set_progress(50)
   other_parties.gather()
 
-  nav.set_section("review_current_order")
+  nav.set_section("signpost_current_order")
   set_progress(62.5)
   set_all_existing_support
-  nav.set_section("review_who_pays")
+  nav.set_section("signpost_who_pays")
   if conditions_changed_in_motion:
     agree_conditions_changed
     
   set_progress(75)
   previously_agreed_on_support
   if not agree_with_motion:
-    nav.set_section("review_changes")
+    nav.set_section("signpost_changes")
     set_progress(87.5)
     changes_requested_signpost
     formula_signpost
@@ -171,7 +173,7 @@ code: |
     is_additional_amount_new
     asking_for_payer_benefits_credit
 
-  nav.set_section("review_conclusion")
+  nav.set_section("signpost_download")
   set_progress(95)
   MLH_outro_filing_information
   if MLH_esign:

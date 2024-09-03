@@ -1,37 +1,6 @@
-event: review_intro
-code: |-
-  review_form
----
-event: review_pending_motion
-code: |-
-  review_form
----
-event: review_your_info
-code: |-
-  review_form
----
-event: review_other_parent
-code: |-
-  review_form
----
-event: review_current_order
-code: |-
-  review_form
----
-event: review_who_pays
-code: |-
-  review_form
----
-event: review_changes
-code: |-
-  review_form
----
-event: review_conclusion
-code: |-
-  review_form
 ---
 id: review screen
-event: review_form
+event: review_full
 question: |
   Review your answers
 review:
