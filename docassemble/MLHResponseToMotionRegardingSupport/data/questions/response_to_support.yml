@@ -27,14 +27,6 @@ metadata:
   generated_on: "2023-10-23"
 ---
 code: |
-  # This controls the default country and list of states in address field questions
-  AL_DEFAULT_COUNTRY = "US"
----
-code: |
-  # This controls the default state in address field questions
-  AL_DEFAULT_STATE = "MI"
----
-code: |
   github_repo_name =  'docassemble-MLHResponseToMotionRegardingSupport'
 ---
 code: |
@@ -45,6 +37,8 @@ code: |
   MLH_time_max = 60
   MLH_materials_included = True
   MLH_form_type = "forms"
+  resource_page_url_only = "https://michiganlegalhelp.org/node/4060"
+  resource_page_name = "Responding to a Motion Regarding Child Support"
 ---
 template: MLH_materials              
 content: |
@@ -206,15 +200,10 @@ comment: |
   Delete mandatory: True to include in another interview
 mandatory: True
 code: |
+  snapshot_start
   interview_order_response_to_support
   # Store anonymous data for analytics / statistics
-  store_variables_snapshot(
-      persistent=True,
-      data={
-          "zip": showifdef("users[0].address.zip"),
-          "reached_interview_end": True,
-      },
-  )
+  snapshot_download
   response_to_support_download
 ---
 id: Response_to_Motion_Regarding_Child_Support
@@ -940,23 +929,22 @@ progress: 100
 ---
 # ALDocument objects specify the metadata for each template
 objects:
-  - response_to_support_post_interview_instructions: ALDocument.using(title="Instructions", filename="response_to_support_next_steps.docx", enabled=True, has_addendum=False)
+  - response_to_support_post_interview_instructions: ALDocument.using(title="Instructions", filename="Instructions - Do not file this", enabled=True, has_addendum=False)
   - response_to_support_attachment: ALDocument.using(title="Response to Motion Regarding Child Support", filename="response_to_support", enabled=True, has_addendum=True, default_overflow_message=AL_DEFAULT_OVERFLOW_MESSAGE)
 ---
 # Bundles group the ALDocuments into separate downloads, such as for court and for the user
 objects:
-  - al_user_bundle: ALDocumentBundle.using(elements=[response_to_support_post_interview_instructions, response_to_support_attachment], filename="response_to_support", title="All forms to download for your records", enabled=True)
-  - al_court_bundle: ALDocumentBundle.using(elements=[response_to_support_attachment],  filename="response_to_support", title="All forms to deliver to court", enabled=True)
+  - al_user_bundle: ALDocumentBundle.using(elements=[response_to_support_post_interview_instructions, response_to_support_attachment], filename="Response to Child Support Motion (All Forms)", title="All forms to download for your records", enabled=True)
+  - al_court_bundle: ALDocumentBundle.using(elements=[response_to_support_attachment],  filename="Response to Child Support Motion (All Forms)", title="All forms to deliver to court", enabled=True)
 ---
 # Each attachment defines a key in an ALDocument. We use `i` as the placeholder here so the same template is 
 # used for "preview" and "final" keys, and logic in the template checks the value of 
 # `i` to show or hide the user's signature
 attachment:
   name: Post-interview-Instructions
-  filename: response_to_support_next_steps
+  filename: Instructions - Do not file this
   docx template file: response_to_support_next_steps.docx
   variable name: response_to_support_post_interview_instructions[i]
-  skip undefined: False
   tagged pdf: True
 ---
 attachment:
