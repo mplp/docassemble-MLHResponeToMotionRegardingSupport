@@ -779,73 +779,25 @@ code: |
   else:
     which_side_pays_new = "defendant"
 ---
-if: who_pays_new == "user"
+id: asking for payer benefits credit
 question: |
-  Are you asking the court to give you a monthly credit for dependent benefits received from a government insurance program?
+   ${ "Do your children" if children_number > 1 else "Does your child" } get **dependent benefits** from a government insurance program based on ${ "your work record?" if who_pays_new == "user" else other_parties[0].possessive('work record?') }
 subquestion: |
-  For example, you would receive a credit each month for benefits from Social Security, Veteran’s Administration, or railroad retirement.
-
   ${ collapse_template(learn_more_about_benefits_credit) }
 fields:
-  - label: |
-      Are you asking for the court to give you a credit?
-    field: asking_for_payer_benefits_credit
+  - no label: asking_for_payer_benefits_credit
+    datatype: radio
+    choices:
+      - Yes, my ${ "children get" if children_number > 1 else "child gets" } dependent benefits based on ${ "my work record." if who_pays_new == "user" else other_parties[0].possessive('work record.') }: True
+      - No, my ${ "children do NOT" if children_number > 1 else "child does NOT" } get dependent benefits based on ${ "my work record." if who_pays_new == "user" else other_parties[0].possessive('work record.') }: False
+  - What type of dependent benefit ${ "do your children" if children_number > 1 else "does your child" } receive?: child_benefit_type
     label above field: True
-    datatype: yesnoradio
-  - label: |
-      % if children_number == 1:
-      What type of dependent benefit does your child receive?
-      % else:
-      What type of dependent benefit do your children receive?
-      % endif
-    label above field: True
-    field: child_benefit_type
     datatype: radio
     code: |
       benefit_types_ordered
     show if: asking_for_payer_benefits_credit
-  - label: |
-      % if children_number == 1:
-      How much is the monthly dependent benefit that your child gets from the government insurance program, based on your work record?
-      % else:
-      How much is the monthly dependent benefit that your children get from the government insurance program, based on your work record?
-      % endif
+  - How much is the monthly dependent benefit that your ${ "children get" if children_number > 1 else "child gets" } from the government insurance program based on ${ "your work record?" if who_pays_new == "user" else other_parties[0].possessive('work record?') }: child_benefit_amount
     label above field: True
-    field: child_benefit_amount
-    datatype: currency
-    show if: asking_for_payer_benefits_credit
----
-if: who_pays_new != "user"
-question: |
-  Are you asking the court to give ${ other_parties[0].name.familiar() } a monthly credit for dependent benefits received from a government insurance program?
-subquestion: |
-  For example, ${ other_parties[0].name.familiar() } would receive a credit each month for benefits from Social Security, Veteran’s Administration, or railroad retirement.
-
-  ${ collapse_template(learn_more_about_benefits_credit) }
-fields:
-  - Are you asking for the court to give ${ other_parties[0].name.familiar() } a credit?: asking_for_payer_benefits_credit
-    label above field: True
-    datatype: yesnoradio
-  - label: |
-      % if children_number == 1:
-      What type of dependent benefit does the child receive?
-      % else:
-      What type of dependent benefit do the children receive?
-      % endif
-    label above field: True
-    field: child_benefit_type
-    datatype: radio
-    code: |
-      benefit_types_ordered
-    show if: asking_for_payer_benefits_credit
-  - label: |
-      % if children_number == 1:
-      How much is the monthly dependent benefit that the child gets from the government insurance program, based on ${ other_parties[0].name.familiar() }'s work record?
-      % else:
-      How much is the monthly dependent benefit that the children get from the government insurance program, based on ${ other_parties[0].name.familiar() }'s work record?
-      % endif
-    label above field: True
-    field: child_benefit_amount
     datatype: currency
     show if: asking_for_payer_benefits_credit
 ---
@@ -853,24 +805,27 @@ template: learn_more_about_benefits_credit
 subject: I want to learn more about this
 content: |
   % if who_pays_new == "user":
-  If you receive retirement, survivor’s, or disability benefits from a government insurance program such as Social Security,
-  Veteran’s Administration, or Railroad Retirement,
+  If you receive retirement, survivor’s, or disability benefits from a government insurance program such as Social Security, Veteran’s Administration, or Railroad Retirement,
   % if children_number == 1:
   your dependent child may also get benefits based on your work record.
-  If this is so, the court will count the child’s benefits as a credit towards payment of your child support obligation.
+  
+  If so, the court will count the child’s benefits as a credit towards payment of your child support obligation.
   % else:
   your dependent children may also get benefits based on your work record.
-  If this is so, the court will count the children’s benefits as a credit towards payment of your child support obligation.
+  
+  If so, the court will count the children’s benefits as a credit towards payment of your child support obligation.
   % endif
   % else:
   If ${ other_parties[0].name.familiar() }'s receives retirement, survivor’s, or disability benefits from a government insurance program such as Social Security,
   Veteran’s Administration, or Railroad Retirement,
   % if children_number == 1:
   ${ other_parties[0].name.familiar() }'s dependent child may also get benefits based on ${ other_parties[0].name.familiar() }'s work record.
-  If this is so, the court will count the child’s benefits as a credit towards payment of ${ other_parties[0].name.familiar() }'s child support obligation.
+
+  If so, the court will count the child’s benefits as a credit towards payment of ${ other_parties[0].name.familiar() }'s child support obligation.
   % else:
   ${ other_parties[0].name.familiar() }'s dependent children may also get benefits based on ${ other_parties[0].name.familiar() }'s work record.
-  If this is so, the court will count the children’s benefits as a credit towards payment of ${ other_parties[0].name.familiar() }'s child support obligation.
+  
+  If so, the court will count the children’s benefits as a credit towards payment of ${ other_parties[0].name.familiar() }'s child support obligation.
   % endif
   % endif
   In other words, the amount of dependent benefits should be subtracted from the support amount.
