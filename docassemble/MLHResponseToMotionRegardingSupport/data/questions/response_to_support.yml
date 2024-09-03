@@ -805,7 +805,7 @@ template: learn_more_about_benefits_credit
 subject: I want to learn more about this
 content: |
   % if who_pays_new == "user":
-  If you receive retirement, survivor’s, or disability benefits from a government insurance program such as Social Security, Veteran’s Administration, or Railroad Retirement,
+  If you get retirement, survivor’s, or disability benefits from a government insurance program such as Social Security, Veteran’s Administration, or Railroad Retirement,
   % if children_number == 1:
   your dependent child may also get benefits based on your work record.
   
@@ -816,7 +816,7 @@ content: |
   If so, the court will count the children’s benefits as a credit towards payment of your child support obligation.
   % endif
   % else:
-  If ${ other_parties[0].name.familiar() }'s receives retirement, survivor’s, or disability benefits from a government insurance program such as Social Security,
+  If ${ other_parties[0].name.familiar() } gets retirement, survivor’s, or disability benefits from a government insurance program such as Social Security,
   Veteran’s Administration, or Railroad Retirement,
   % if children_number == 1:
   ${ other_parties[0].name.familiar() }'s dependent child may also get benefits based on ${ other_parties[0].name.familiar() }'s work record.
