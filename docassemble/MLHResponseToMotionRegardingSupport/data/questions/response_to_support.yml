@@ -15,6 +15,7 @@ metadata:
     - "FA-05-00-00-00"
   authors:
     - Bryce Willey
+    - Emily Kress Miller
   original_form:
     - https://www.courts.michigan.gov/siteassets/forms/scao-approved/foc51.pdf
   help_page_url: >-
@@ -567,10 +568,12 @@ subquestion: |
 fields:
   - "${ other_parties[0].name.familiar() } and I agreed to start or change support": agree_with_others_support_answer
     datatype: radio
+    label above field: True
     choices:
       - "exactly as stated in the motion": agree_exactly
       - "but not as stated in the motion": agree_not_as_stated
-  - "Explain in details what you did agree on. Include all necessary facts.": not_as_stated_reason
+  - "Explain in detail what you **did agree** on. Include all necessary facts.": not_as_stated_reason
+    label above field: True
     input type: area
     show if:
       variable: agree_with_others_support_answer
@@ -875,7 +878,7 @@ subquestion: |
   
   View, download and send your form below. Click the "Edit answers" button to fix any mistakes.
 
-  ${ action_button_html(url_action('review_form'), label='Edit answers', color='info') }
+  ${ action_button_html(url_action('review_full'), label='Edit answers', color='info') }
   
   ${ al_user_bundle.download_list_html() }
 
@@ -892,24 +895,11 @@ objects:
 objects:
   - response_to_support_attachment: ALDocumentBundle.using(elements=[response_to_support_attachment_main, response_to_support_attachment_addendum], filename="Response to Motion Regarding Child Support - FOC 51.pdf", title="Response to Motion Regarding Child Support - FOC 51", enabled=True)
 ---
-### use the below to figure out when to enable attachment and also what should go in it
 code: |
-  if base_support_matches_calc == "unable_to_use_mi_calc" and (agreed_on_who_pays or not has_existing_support_order):
-    response_to_support_attachment_addendum.enabled = False
-  else:
+  if (conditions_changed_in_motion and not agree_conditions_changed) or (previously_agreed_on_support and agree_with_others_support_answer == "agree_not_as_stated") or not agree_with_motion:
     response_to_support_attachment_addendum.enabled = True
----
-depends on:
-  - previously_agreed_on_support
-  - agree_with_others_support_answer
-  - agreed_with_motion
-code: |
-  response_to_support_attachment.overflow_fields["conditions_changed_disagree_reason"].overflow_trigger = 340
-  response_to_support_attachment.overflow_fields["conditions_changed_disagree_reason"].label = "5. I do not agree that conditions regarding support have changed as stated in the motion"
-  response_to_support_attachment.overflow_fields["not_as_stated_reason"].overflow_trigger = previously_agreed_on_support and agree_with_others_support_answer == "agree_not_as_stated"
-  response_to_support_attachment.overflow_fields["not_as_stated_reason"].label = "6. I agreed with the other party to start/change support, but not as stated in the motion"
-  response_to_support_attachment.overflow_fields["support_should_be_paid_as_follows"].overflow_trigger = not agree_with_motion
-  response_to_support_attachment.overflow_fields.gathered = True
+  else:
+    response_to_support_attachment_addendum.enabled = False
 ---
 # Bundles group the ALDocuments into separate downloads, such as for court and for the user
 objects:
@@ -928,7 +918,7 @@ attachment:
 ---
 attachment:
   variable name: response_to_support_attachment_addendum[i]
-  docx template file: foc51 Addendum.docx
+  docx template file: foc51_Addendum.docx
   skip undefined: True
 ---
 attachment:
@@ -981,21 +971,20 @@ attachment:
       - "disagree_conditions_changed": ${ conditions_changed_in_motion and not agree_conditions_changed }
       - "conditions_changed_disagree_reason": |
           % if conditions_changed_in_motion and not agree_conditions_changed:
-          ${ response_to_support_attachment.safe_value("conditions_changed_disagree_reason") }
+          See attachment.
           % endif
       - "agree_with_other_on_support": ${ previously_agreed_on_support }
       - "agree_exactly_with_other": ${ previously_agreed_on_support and agree_with_others_support_answer == "agree_exactly" }
       - "agree_not_as_stated": ${ previously_agreed_on_support and agree_with_others_support_answer == "agree_not_as_stated" }
       - "not_as_stated_reason": |
           % if previously_agreed_on_support and agree_with_others_support_answer == "agree_not_as_stated":
-          See addendum.
+          See attachment.
           % endif
       - "agree_with_motion": ${ agree_with_motion }
       - "disagree_with_motion": ${ not agree_with_motion }
       - "support_should_be_paid_as_follows": |
           % if not agree_with_motion:
-          See addendum.
+          See attachment.
           % endif
       - "users1_signature": ${ f"/s/ {users[0]}" if MLH_esign else "" }
       - "signature_date": ${ signature_date if MLH_esign else "" }
-      - "service_signature_date": ${ service_signature_date }
